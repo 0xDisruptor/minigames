@@ -24,6 +24,8 @@ export default defineConfig([
     ],
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
+      // Temporarily allow empty files
+      'unicorn/no-empty-file': 'off',
     },
   },
   {
