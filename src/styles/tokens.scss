@@ -1,0 +1,114 @@
+// base
+$white: #FFFFFF;
+$black: #000000;
+
+// general
+$bg: #F9F8F3;
+$on-bg: #5F5D75;
+$on-big-low: #736380;
+$bg-footer: #1E1B3A;
+$bg-footer-low: #2A264F;
+$bg-footer-lowest: #3C376E;
+$on-bg-footer: #B9B5C9;
+$surface: #FFF9E5;
+$surface-low: #FFFCF5;
+$primary: #FFD02B;
+$primary-low: #FDE047;
+$primary-high: #E5BB00;
+$on-primary: #242145;
+$secondary: #F0EEFF;
+$tertiary: #3A2EBF;
+$like: #FF4B4B;
+$error: #B3261E;
+$price-free: #0B8A8F;
+
+// Borders
+$outline: #E5E7EB;
+$outline-variant: #D2D2D2;
+
+// Additional
+$avatar-random-1:#E9EEF6;
+$avatar-random-2: #A3E2C9;
+$avatar-random-3: #BCE3FF;
+$avatar-random-4: #FFC6FF;
+$avatar-random-5: #E8DFF5;
+
+
+
+// Font Tokens
+// size
+$display-large: 56px;
+$display-medium: 36px;
+$display-small: 24px;
+
+$headline-large: 32px;
+$headline-medium: 24px;
+$headline-small: 20px;
+
+$body-large: 18px;
+$body-medium: 16px;
+$body-small: 14px;
+
+$label-extra-large: 16px;
+$label-large: 14px;
+$label-medium: 12px;
+$label-small: 10px;
+
+
+// Font Weight
+$regular: 400;
+$medium: 500;
+$bold: 700;
+$extra-bold: 800;
+
+
+// Font Family
+$inter: 'Inter', sans-serif;
+$roboto: 'Roboto', sans-serif;
+
+
+
+
+// Size
+
+$size-05: 4px;
+$size-1: 8px;
+$size-2: 16px;
+$size-3: 24px;
+$size-4: 32px;
+$size-5: 40px;
+$size-6: 48px;
+$size-7: 56px;
+$size-8: 64px;
+$size-9: 72px;
+$size-10: 80px;
+$size-11: 88px;
+$size-12: 96px;
+$size-13: 104px;
+$size-14: 112px;
+$size-15: 120px;
+
+
+// Corner / Border Radius
+
+$corner-extra-small: 4px;
+$corner-small: 8px;
+$corner-medium: 12px;
+$corner-large: 16px;
+$corner-extra-large: 24px;
+$corner-full: 9999px;
+
+
+// Button
+
+$btn-large: 24px 16px;
+$btn-medium: 10px 20px;
+$btn-small: 16px 8px;
+$btn-icon: 8px;
+
+
+// Shadow
+
+$level-1: 4px 4px $on-primary;
+$level-2: 6px 6px $on-primary;
+$level-3: 8px 8px $on-primary;
