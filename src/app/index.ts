@@ -1,3 +1,9 @@
 import '../styles/globals.scss';
+import { createHomePage } from '../pages/home/home-page';
 
-document.querySelector<HTMLDivElement>('#app')!.replaceChildren();
+const app: HTMLDivElement = document.createElement('div');
+app.id = 'app';
+
+app.append(createHomePage());
+
+document.body.append(app);
