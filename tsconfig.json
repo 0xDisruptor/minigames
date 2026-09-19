@@ -6,7 +6,7 @@
     "types": ["vite/client"],
     "allowArbitraryExtensions": true,
     "skipLibCheck": true,
-
+    "strict": true,
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
@@ -18,6 +18,8 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
+    "noImplicitAny": true,
+    "isolatedModules": true,
     "noFallthroughCasesInSwitch": true
   },
   "include": ["src"]
