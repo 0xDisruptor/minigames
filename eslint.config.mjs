@@ -3,6 +3,7 @@ import { defineConfig } from 'eslint/config';
 import tseslint from 'typescript-eslint';
 import unicorn from 'eslint-plugin-unicorn';
 import globals from 'globals';
+import eslintConfigPrettier from 'eslint-config-prettier/flat';
 
 export default defineConfig([
   {
@@ -19,6 +20,7 @@ export default defineConfig([
       js.configs.recommended,
       tseslint.configs.recommended,
       unicorn.configs.recommended,
+      eslintConfigPrettier,
     ],
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',

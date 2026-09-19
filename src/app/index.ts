@@ -1,3 +1,1 @@
-(document.querySelector<HTMLDivElement>('#app')!).replaceChildren();
-
-
+document.querySelector<HTMLDivElement>('#app')!.replaceChildren();
