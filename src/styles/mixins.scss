@@ -1,0 +1,13 @@
+@use './tokens' as tokens;
+
+@mixin tablet-down {
+  @media (width <= tokens.$breakpoint-tablet) {
+    @content;
+  }
+}
+
+@mixin wide-desktop {
+  @media (width > tokens.$breakpoint-desktop) {
+    @content;
+  }
+}

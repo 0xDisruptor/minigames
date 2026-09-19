@@ -1,0 +1,30 @@
+@use './tokens' as tokens;
+@use './mixins' as mixins;
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background-color: tokens.$bg;
+  color: tokens.$on-bg;
+  font-size: tokens.$body-medium;
+  font-weight: tokens.$regular;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+#app {
+  @include mixins.wide-desktop {
+    max-width: tokens.$breakpoint-desktop;
+    margin-inline: auto;
+  }
+}
