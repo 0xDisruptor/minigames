@@ -1,0 +1,173 @@
+@use '../../styles/tokens' as tokens;
+@use '../../styles/mixins' as mixins;
+
+.developer-cta {
+  display: grid;
+
+  // Desktop screenshot: image 680px, content 960px, gap 40px.
+  grid-template-columns: minmax(0, 17fr) minmax(0, 24fr);
+  align-items: center;
+  gap: tokens.$size-5;
+  padding: tokens.$size-5 tokens.$size-15;
+  font-family: tokens.$inter;
+
+  &__image {
+    display: block;
+    width: 100%;
+    height: tokens.$developer-image-height-desktop;
+    border-radius: tokens.$corner-extra-large;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: tokens.$size-3;
+    min-width: 0;
+    padding: tokens.$size-5;
+    border: tokens.$border-width solid tokens.$on-primary;
+    border-radius: tokens.$corner-extra-large;
+    background-color: tokens.$white;
+    box-shadow: tokens.$developer-shadow;
+  }
+
+  &__title {
+    margin: 0;
+    color: tokens.$on-primary;
+    font-size: tokens.$headline-large;
+    font-weight: tokens.$bold;
+    line-height: 1.2;
+  }
+
+  &__description {
+    max-width: tokens.$developer-copy-width-desktop;
+    margin: 0;
+    color: tokens.$on-bg;
+    font-size: tokens.$body-large;
+    font-weight: tokens.$regular;
+    line-height: 1.5;
+  }
+
+  &__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: tokens.$size-1;
+    max-width: 100%;
+    padding: tokens.$size-2 tokens.$size-3;
+    border: tokens.$border-width solid tokens.$on-primary;
+    border-radius: tokens.$corner-medium;
+    background-color: tokens.$primary;
+    color: tokens.$on-primary;
+    box-shadow: tokens.$developer-shadow;
+    font-family: inherit;
+    font-size: tokens.$body-large;
+    font-weight: tokens.$bold;
+    line-height: 1.2;
+    cursor: pointer;
+
+    &:hover {
+      background-color: tokens.$primary-high;
+    }
+
+    &:active {
+      background-color: tokens.$primary-low;
+    }
+
+    &:focus-visible {
+      outline: tokens.$border-width solid tokens.$tertiary;
+      outline-offset: tokens.$size-05;
+    }
+
+    &:disabled {
+      background-color: tokens.$outline;
+      color: tokens.$on-bg;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+  }
+
+  &__icon {
+    display: block;
+    flex-shrink: 0;
+    width: tokens.$size-3;
+    height: tokens.$size-3;
+  }
+
+  &__contact {
+    margin: 0;
+    color: tokens.$on-bg;
+    font-size: tokens.$body-small;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
+  // Stack earlier than 768px to keep the text readable
+  // at intermediate widths.
+  @include mixins.header-compact {
+    grid-template-columns: minmax(0, 1fr);
+    gap: tokens.$size-3;
+    padding-inline: tokens.$size-5;
+
+    &__image {
+      height: tokens.$developer-image-height-tablet;
+    }
+  }
+
+  @include mixins.tablet-down {
+    padding-block: tokens.$size-3;
+
+    &__content {
+      gap: tokens.$size-2;
+      padding: tokens.$size-4;
+    }
+
+    &__title {
+      font-size: tokens.$headline-medium;
+    }
+
+    &__description {
+      max-width: tokens.$developer-copy-width-tablet;
+      font-size: tokens.$body-small;
+    }
+
+    &__button {
+      padding: tokens.$btn-medium;
+      font-size: tokens.$body-small;
+    }
+
+    &__icon {
+      width: tokens.$size-2;
+      height: tokens.$size-2;
+    }
+
+    &__contact {
+      font-size: tokens.$label-medium;
+    }
+  }
+
+  @include mixins.mobile-down {
+    gap: tokens.$size-2;
+    padding: tokens.$size-2;
+
+    &__image {
+      height: tokens.$developer-image-height-mobile;
+    }
+
+    &__content {
+      padding: tokens.$size-3;
+    }
+
+    &__description {
+      max-width: 100%;
+      font-size: tokens.$label-medium;
+    }
+
+    &__button {
+      padding: tokens.$size-1 tokens.$size-2;
+      font-size: tokens.$label-medium;
+    }
+  }
+}

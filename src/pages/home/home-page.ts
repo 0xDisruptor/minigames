@@ -2,6 +2,7 @@ import './home-page.scss';
 import heroBackgroundUrl from '../../assets/images/hero-background.png';
 import { createSlider } from '../../features/slider/slider';
 import { createLeaderboard } from '../../components/leaderboard/leaderboard';
+import { createDeveloperCta } from '../../components/developer-cta/developer-cta';
 
 function createHero(): HTMLElement {
   const section: HTMLElement = document.createElement('section');
@@ -50,7 +51,7 @@ function createHero(): HTMLElement {
 export function createHomePage(): HTMLElement {
   const main: HTMLElement = document.createElement('main');
   main.className = 'home-page';
-  main.append(createHero(), createSlider(), createLeaderboard());
+  main.append(createHero(), createSlider(), createLeaderboard(), createDeveloperCta());
 
   return main;
 }
