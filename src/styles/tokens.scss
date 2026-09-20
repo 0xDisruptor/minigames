@@ -128,3 +128,18 @@ $hero-background-opacity: 0.2;
 $hero-overlay-opacity: 0.65;
 $hero-border-desktop: 3px;
 $hero-border-tablet: 2.5px;
+
+$slider-height-desktop: 384px;
+$slider-height-tablet: 280px;
+$slider-height-mobile: 200px;
+
+$slider-info-threshold: 288px;
+$slider-card-border: 2.5px;
+$section-accent-border: 1.5px;
+
+$slider-overlay: linear-gradient(
+  to bottom,
+  transparent,
+  rgba($black, 0.4) 17.308%,
+  rgba($black, 0.85) 46.154%
+);

@@ -1,5 +1,6 @@
 import './home-page.scss';
 import heroBackgroundUrl from '../../assets/images/hero-background.png';
+import { createSlider } from '../../features/slider/slider';
 
 function createHero(): HTMLElement {
   const section: HTMLElement = document.createElement('section');
@@ -47,7 +48,7 @@ function createHero(): HTMLElement {
 export function createHomePage(): HTMLElement {
   const main: HTMLElement = document.createElement('main');
   main.className = 'home-page';
-  main.append(createHero());
+  main.append(createHero(), createSlider());
 
   return main;
 }
