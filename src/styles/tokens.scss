@@ -1,3 +1,5 @@
+$border-width: 2px;
+
 // base
 $white: #ffffff;
 $black: #000000;
@@ -109,3 +111,9 @@ $viewport-mobile: 375px;
 // Responsive breakpoints
 $breakpoint-tablet: 768px;
 $breakpoint-desktop: 1920px;
+$breakpoint-mobile: 600px;
+
+$header-height-desktop: 85px;
+$header-button-line-height: 17px;
+
+$breakpoint-header-compact: 1024px;

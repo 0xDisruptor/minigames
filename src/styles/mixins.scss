@@ -1,7 +1,19 @@
 @use './tokens' as tokens;
 
+@mixin mobile-down {
+  @media (width <= tokens.$breakpoint-mobile) {
+    @content;
+  }
+}
+
 @mixin tablet-down {
   @media (width <= tokens.$breakpoint-tablet) {
+    @content;
+  }
+}
+
+@mixin header-compact {
+  @media (width <= tokens.$breakpoint-header-compact) {
     @content;
   }
 }
