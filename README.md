@@ -1,4 +1,5 @@
 # minigames
+Visit Web: [Story-1](https://0xdisruptor.github.io/minigames/)
 
 ## Brief discription
 
