@@ -2,6 +2,7 @@ import './header.scss';
 import logoUrl from '../../assets/images/logo.svg';
 import menuUrl from '../../assets/icons/menu.svg';
 import { createMobileMenu } from './mobile-menu';
+import type { OpenAuth } from '../dialogs/auth-dialog';
 
 function createButton(label: string, className: string): HTMLButtonElement {
   const button: HTMLButtonElement = document.createElement('button');
@@ -13,7 +14,7 @@ function createButton(label: string, className: string): HTMLButtonElement {
   return button;
 }
 
-export function createHeader(): HTMLElement {
+export function createHeader(onAuth: OpenAuth): HTMLElement {
   const header: HTMLElement = document.createElement('header');
   header.className = 'header';
 
@@ -86,10 +87,18 @@ export function createHeader(): HTMLElement {
   menuImage.width = 32;
   menuImage.height = 32;
 
+  loginButton.addEventListener('click', (): void => {
+    onAuth('login', loginButton);
+  });
+
+  signupButton.addEventListener('click', (): void => {
+    onAuth('register', signupButton);
+  });
+
   menuButton.append(menuImage);
   actions.append(loginButton, signupButton, menuButton);
   container.append(logo, navigation, actions);
-  const mobileMenu: HTMLDialogElement = createMobileMenu(menuButton);
+  const mobileMenu: HTMLDialogElement = createMobileMenu(menuButton, onAuth);
   header.append(container, mobileMenu);
 
   return header;

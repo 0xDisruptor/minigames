@@ -166,3 +166,9 @@ $developer-shadow: 0 8px 24px rgba($black, 0.15);
 $footer-description-width: 400px;
 $footer-credit-icon-compact: 20px;
 $footer-divider-width: 1px;
+
+// Auth dialog
+$auth-dialog-width: 420px;
+$auth-dialog-border: 3px;
+$auth-animation-duration: 180ms;
+$auth-backdrop: rgba($bg-footer, 0.65);

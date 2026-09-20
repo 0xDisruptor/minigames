@@ -1,0 +1,254 @@
+@use '../../styles/tokens' as tokens;
+
+.auth-form {
+  width: 100%;
+  min-width: 0;
+  color: tokens.$on-primary;
+  font-family: tokens.$inter;
+
+  &__header {
+    margin-bottom: tokens.$size-3;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: tokens.$headline-medium;
+    font-weight: tokens.$bold;
+    line-height: 1.2;
+  }
+
+  &__description {
+    margin: tokens.$size-1 0 0;
+    color: tokens.$on-bg;
+    font-size: tokens.$body-small;
+    line-height: 1.5;
+  }
+
+  &__fields {
+    display: flex;
+    flex-direction: column;
+    gap: tokens.$size-2;
+  }
+
+  &__field {
+    min-width: 0;
+  }
+
+  &__label {
+    display: block;
+    margin-bottom: tokens.$size-1;
+    font-size: tokens.$body-small;
+    font-weight: tokens.$bold;
+    line-height: 1.2;
+  }
+
+  &__control {
+    position: relative;
+  }
+
+  &__field-icon {
+    position: absolute;
+    top: 50%;
+    left: tokens.$size-2;
+    width: tokens.$size-2;
+    height: tokens.$size-2;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  &__input {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    height: tokens.$size-6;
+    padding: tokens.$size-1 tokens.$size-2;
+    padding-left: tokens.$size-6;
+    border: tokens.$border-width solid tokens.$on-primary;
+    border-radius: tokens.$corner-small;
+    background-color: tokens.$white;
+    color: tokens.$on-primary;
+    font-family: inherit;
+    font-size: tokens.$body-small;
+    line-height: 1.5;
+    cursor: text;
+
+    &::placeholder {
+      color: tokens.$on-bg;
+      opacity: 1;
+    }
+
+    &:hover {
+      border-color: tokens.$tertiary;
+    }
+
+    &:focus {
+      border-color: tokens.$tertiary;
+      outline: tokens.$border-width solid tokens.$tertiary;
+      outline-offset: tokens.$border-width;
+    }
+
+    &:disabled {
+      border-color: tokens.$outline-variant;
+      background-color: tokens.$outline;
+      cursor: not-allowed;
+    }
+  }
+
+  &__button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: tokens.$size-2;
+    width: 100%;
+    min-height: tokens.$size-6;
+    padding: tokens.$size-1 tokens.$size-2;
+    border: tokens.$border-width solid tokens.$on-primary;
+    border-radius: tokens.$corner-medium;
+    color: tokens.$on-primary;
+    font-family: inherit;
+    font-size: tokens.$body-medium;
+    font-weight: tokens.$bold;
+    line-height: 1.5;
+    cursor: pointer;
+
+    &--primary {
+      margin-top: tokens.$size-3;
+      background-color: tokens.$primary;
+      box-shadow: 0 tokens.$size-05 0 tokens.$on-primary;
+
+      &:hover {
+        background-color: tokens.$primary-high;
+      }
+
+      &:active {
+        background-color: tokens.$primary-low;
+        box-shadow: none;
+      }
+    }
+
+    &--google {
+      background-color: tokens.$white;
+
+      &:hover {
+        background-color: tokens.$surface;
+      }
+
+      &:active {
+        background-color: tokens.$secondary;
+      }
+    }
+
+    &:disabled {
+      background-color: tokens.$outline;
+      color: tokens.$on-bg;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+  }
+
+  &__divider {
+    display: flex;
+    align-items: center;
+    gap: tokens.$size-2;
+    margin-block: tokens.$size-2;
+    color: tokens.$on-bg;
+    font-size: tokens.$label-medium;
+    font-weight: tokens.$bold;
+    line-height: 1.5;
+
+    &::before,
+    &::after {
+      flex: 1;
+      height: tokens.$border-width;
+      background-color: tokens.$outline;
+      content: '';
+    }
+  }
+
+  &__google-icon {
+    display: block;
+    flex-shrink: 0;
+    width: tokens.$size-3;
+    height: tokens.$size-3;
+  }
+
+  &__footer {
+    margin: tokens.$size-3 0 0;
+    color: tokens.$on-bg;
+    font-size: tokens.$body-small;
+    line-height: 1.5;
+    text-align: center;
+  }
+
+  &__switch {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: tokens.$on-primary;
+    font: inherit;
+    font-weight: tokens.$bold;
+    text-decoration: underline;
+    text-underline-offset: tokens.$border-width;
+    cursor: pointer;
+
+    &:hover {
+      color: tokens.$tertiary;
+    }
+
+    &:active {
+      color: tokens.$on-bg;
+    }
+  }
+
+  &__button:focus-visible,
+  &__switch:focus-visible {
+    outline: tokens.$border-width solid tokens.$tertiary;
+    outline-offset: tokens.$size-05;
+  }
+
+  &__input--password {
+    padding-right: tokens.$size-6;
+  }
+
+  &__password-toggle {
+    position: absolute;
+    top: 50%;
+    right: tokens.$size-1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: tokens.$size-4;
+    height: tokens.$size-4;
+    padding: tokens.$size-05;
+    border: 0;
+    border-radius: tokens.$corner-small;
+    background: transparent;
+    transform: translateY(-50%);
+    cursor: pointer;
+
+    img {
+      display: block;
+      width: tokens.$size-3;
+      height: tokens.$size-3;
+    }
+
+    &:hover {
+      background-color: tokens.$secondary;
+    }
+
+    &:active {
+      background-color: tokens.$outline;
+    }
+
+    &:focus-visible {
+      outline: tokens.$border-width solid tokens.$tertiary;
+    }
+  }
+
+  &__recovery {
+    margin-top: tokens.$size-2;
+    font-size: tokens.$body-small;
+    line-height: 1.5;
+    text-align: right;
+  }
+}

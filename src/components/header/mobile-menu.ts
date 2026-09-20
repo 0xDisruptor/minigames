@@ -1,8 +1,9 @@
 import './mobile-menu.scss';
 import logoUrl from '../../assets/images/logo.svg';
 import closeUrl from '../../assets/icons/close.svg';
+import type { OpenAuth } from '../dialogs/auth-dialog';
 
-export function createMobileMenu(trigger: HTMLButtonElement): HTMLDialogElement {
+export function createMobileMenu(trigger: HTMLButtonElement, onAuth: OpenAuth): HTMLDialogElement {
   const dialog: HTMLDialogElement = document.createElement('dialog');
   dialog.id = 'mobile-menu';
   dialog.className = 'mobile-menu';
@@ -112,6 +113,16 @@ export function createMobileMenu(trigger: HTMLButtonElement): HTMLDialogElement 
   dialog.addEventListener('close', (): void => {
     trigger.setAttribute('aria-expanded', 'false');
     document.documentElement.classList.remove('has-open-menu');
+  });
+
+  loginButton.addEventListener('click', (): void => {
+    dialog.close();
+    onAuth('login', trigger);
+  });
+
+  signupButton.addEventListener('click', (): void => {
+    dialog.close();
+    onAuth('register', trigger);
   });
 
   return dialog;
