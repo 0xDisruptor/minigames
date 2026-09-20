@@ -1,0 +1,229 @@
+@use '../../styles/tokens' as tokens;
+@use '../../styles/mixins' as mixins;
+
+.footer {
+  padding: tokens.$size-5 tokens.$size-15;
+  color: tokens.$on-bg-footer;
+  background-color: tokens.$bg-footer;
+  font-family: tokens.$inter;
+  font-size: tokens.$body-small;
+  line-height: 1.5;
+
+  &__top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: tokens.$size-8;
+  }
+
+  &__brand {
+    display: flex;
+    flex-direction: column;
+    gap: tokens.$size-3;
+    width: 100%;
+    max-width: tokens.$footer-description-width;
+    min-width: 0;
+  }
+
+  &__logo {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    gap: tokens.$size-1;
+    color: tokens.$white;
+    font-size: tokens.$headline-medium;
+    font-weight: tokens.$bold;
+    line-height: 1.2;
+    text-decoration: none;
+  }
+
+  &__logo-image {
+    display: block;
+    flex-shrink: 0;
+    width: tokens.$size-4;
+    height: tokens.$size-4;
+  }
+
+  &__description,
+  &__copyright,
+  &__tagline {
+    margin: 0;
+  }
+
+  &__groups {
+    display: grid;
+    grid-template-columns: repeat(3, max-content);
+    gap: tokens.$size-10;
+  }
+
+  &__group {
+    min-width: 0;
+  }
+
+  &__heading {
+    margin: 0 0 tokens.$size-2;
+    color: tokens.$white;
+    font-size: tokens.$body-medium;
+    font-weight: tokens.$bold;
+    line-height: 1.2;
+  }
+
+  &__list,
+  &__socials {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: tokens.$size-2;
+  }
+
+  &__link,
+  &__credit-link {
+    color: tokens.$on-bg-footer;
+    text-decoration: none;
+
+    &:hover {
+      color: tokens.$white;
+    }
+
+    &:active {
+      color: tokens.$primary;
+    }
+  }
+
+  &__socials {
+    display: flex;
+    gap: tokens.$size-2;
+  }
+
+  &__social-link {
+    display: inline-flex;
+    border-radius: tokens.$corner-full;
+
+    &:hover {
+      box-shadow: 0 0 0 tokens.$border-width tokens.$on-bg-footer;
+    }
+
+    &:active {
+      box-shadow: 0 0 0 tokens.$border-width tokens.$primary;
+    }
+  }
+
+  &__social-icon {
+    display: block;
+    width: tokens.$size-5;
+    height: tokens.$size-5;
+  }
+
+  &__bottom {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: tokens.$size-2 tokens.$size-3;
+    margin-top: tokens.$size-8;
+    padding-top: tokens.$size-3;
+    border-top: tokens.$footer-divider-width solid tokens.$bg-footer-low;
+  }
+
+  &__credit-link {
+    display: inline-flex;
+    align-items: center;
+    gap: tokens.$size-1;
+    white-space: nowrap;
+  }
+
+  &__credit-icon {
+    display: block;
+    flex-shrink: 0;
+    width: tokens.$size-3;
+    height: tokens.$size-3;
+  }
+
+  &__logo:hover {
+    color: tokens.$primary;
+  }
+
+  &__logo:active {
+    color: tokens.$primary-high;
+  }
+
+  a:focus-visible {
+    outline: tokens.$border-width solid tokens.$primary;
+    outline-offset: tokens.$size-05;
+    border-radius: tokens.$corner-extra-small;
+  }
+
+  @include mixins.header-compact {
+    padding-inline: tokens.$size-5;
+
+    &__top {
+      flex-direction: column;
+      gap: tokens.$size-3;
+    }
+
+    &__brand {
+      max-width: none;
+    }
+
+    &__groups {
+      gap: tokens.$size-5;
+    }
+  }
+
+  @include mixins.tablet-down {
+    &__logo {
+      font-size: tokens.$headline-small;
+    }
+
+    &__social-icon {
+      width: tokens.$size-4;
+      height: tokens.$size-4;
+    }
+
+    &__bottom {
+      gap: tokens.$size-2;
+      margin-top: tokens.$size-5;
+      padding-top: tokens.$size-2;
+    }
+
+    &__credit-icon {
+      width: tokens.$footer-credit-icon-compact;
+      height: tokens.$footer-credit-icon-compact;
+    }
+  }
+
+  @include mixins.mobile-down {
+    padding: tokens.$size-4 tokens.$size-2;
+
+    &__groups {
+      width: 100%;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: tokens.$size-3 tokens.$size-5;
+    }
+
+    &__community {
+      grid-column: 1 / -1;
+    }
+
+    &__bottom {
+      justify-content: flex-start;
+      gap: tokens.$size-1 tokens.$size-2;
+      margin-top: tokens.$size-3;
+      padding-top: tokens.$size-1;
+      font-size: tokens.$label-medium;
+    }
+
+    &__copyright {
+      flex-basis: 100%;
+    }
+
+    &__tagline {
+      display: none;
+    }
+  }
+}
