@@ -1,0 +1,177 @@
+@use '../../styles/tokens' as tokens;
+@use '../../styles/mixins' as mixins;
+
+.hero {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  padding: tokens.$size-14 tokens.$size-15;
+  overflow: hidden;
+  font-family: tokens.$inter;
+
+  &::before {
+    position: absolute;
+    z-index: -2;
+    inset: 0;
+    background-color: rgba(tokens.$bg-footer, tokens.$hero-overlay-opacity);
+    content: '';
+  }
+
+  &__background {
+    position: absolute;
+    z-index: -1;
+    pointer-events: none;
+    opacity: tokens.$hero-background-opacity;
+
+    // Exact desktop image crop from Figma; spacing tokens
+    // cannot represent these image-relative percentages.
+    top: -13.76%;
+    left: -9.33%;
+    width: 119.29%;
+    height: 118.9%;
+    object-fit: fill;
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: tokens.$size-3;
+    width: tokens.$hero-card-desktop;
+    max-width: 100%;
+    min-width: 0;
+    padding: tokens.$size-6;
+    border-radius: tokens.$corner-extra-large;
+    background-color: tokens.$bg;
+
+    // Inset borders preserve the content dimensions in Figma.
+    box-shadow:
+      inset 0 0 0 tokens.$hero-border-desktop tokens.$on-primary,
+      tokens.$level-3;
+  }
+
+  &__title {
+    margin: 0;
+    color: tokens.$on-primary;
+    font-size: tokens.$display-large;
+    font-weight: tokens.$bold;
+    line-height: 1.1;
+  }
+
+  &__description {
+    margin: 0;
+    color: tokens.$on-bg;
+    font-size: tokens.$body-large;
+    font-weight: tokens.$medium;
+    line-height: 1.5;
+  }
+
+  &__description-short {
+    display: none;
+  }
+
+  &__button {
+    max-width: 100%;
+    padding: tokens.$size-2 tokens.$size-3;
+    border: 0;
+    border-radius: tokens.$corner-small;
+    background-color: tokens.$primary;
+    color: tokens.$on-primary;
+    font-family: inherit;
+    font-size: tokens.$body-large;
+    font-weight: tokens.$bold;
+    line-height: normal;
+    box-shadow: inset 0 0 0 tokens.$border-width tokens.$on-primary;
+    cursor: pointer;
+
+    &:hover {
+      background-color: tokens.$primary-high;
+    }
+
+    &:active {
+      background-color: tokens.$primary-low;
+    }
+
+    &:focus-visible {
+      outline: tokens.$border-width solid tokens.$tertiary;
+      outline-offset: tokens.$size-05;
+    }
+
+    &:disabled {
+      background-color: tokens.$outline;
+      color: tokens.$on-bg;
+      cursor: not-allowed;
+    }
+  }
+
+  @include mixins.tablet-down {
+    padding: tokens.$size-9 tokens.$size-5;
+
+    &__background {
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    &__content {
+      width: tokens.$hero-card-tablet;
+      gap: tokens.$size-2;
+      padding: tokens.$size-3;
+      border-radius: tokens.$corner-large;
+      box-shadow:
+        inset 0 0 0 tokens.$hero-border-tablet tokens.$on-primary,
+        tokens.$level-2;
+    }
+
+    &__title {
+      font-size: tokens.$display-medium;
+      line-height: 1.15;
+    }
+
+    &__description {
+      font-size: tokens.$body-small;
+      line-height: 1.4;
+    }
+
+    &__button {
+      padding: tokens.$btn-medium;
+      font-size: tokens.$body-small;
+    }
+  }
+
+  @include mixins.mobile-down {
+    padding: tokens.$size-8 tokens.$size-2;
+
+    &__content {
+      width: 100%;
+      border-radius: tokens.$corner-medium;
+      box-shadow:
+        inset 0 0 0 tokens.$border-width tokens.$on-primary,
+        tokens.$level-1;
+    }
+
+    &__title {
+      font-size: tokens.$display-small;
+      line-height: 1.2;
+    }
+
+    &__description {
+      font-size: tokens.$label-medium;
+    }
+
+    &__description-full {
+      display: none;
+    }
+
+    &__description-short {
+      display: inline;
+    }
+
+    &__button {
+      padding: tokens.$size-1 tokens.$size-2;
+      font-size: tokens.$label-medium;
+    }
+  }
+}
