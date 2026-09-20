@@ -1,6 +1,7 @@
 import './home-page.scss';
 import heroBackgroundUrl from '../../assets/images/hero-background.png';
 import { createSlider } from '../../features/slider/slider';
+import { createLeaderboard } from '../../components/leaderboard/leaderboard';
 
 function createHero(): HTMLElement {
   const section: HTMLElement = document.createElement('section');
@@ -26,7 +27,8 @@ function createHero(): HTMLElement {
   const desktopText: HTMLSpanElement = document.createElement('span');
   desktopText.className = 'hero__description-full';
   desktopText.textContent =
-    'Discover hundreds of curated casual mini-games. Play instantly in your browser — puzzle, match 3, farm, and board classics.';
+    'Discover hundreds of curated casual mini-games. Play instantly in your browser — puzzle,\
+     match 3, farm, and board classics.';
 
   const mobileText: HTMLSpanElement = document.createElement('span');
   mobileText.className = 'hero__description-short';
@@ -48,7 +50,7 @@ function createHero(): HTMLElement {
 export function createHomePage(): HTMLElement {
   const main: HTMLElement = document.createElement('main');
   main.className = 'home-page';
-  main.append(createHero(), createSlider());
+  main.append(createHero(), createSlider(), createLeaderboard());
 
   return main;
 }
