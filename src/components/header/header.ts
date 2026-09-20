@@ -1,6 +1,7 @@
 import './header.scss';
 import logoUrl from '../../assets/images/logo.svg';
 import menuUrl from '../../assets/icons/menu.svg';
+import { createMobileMenu } from './mobile-menu';
 
 function createButton(label: string, className: string): HTMLButtonElement {
   const button: HTMLButtonElement = document.createElement('button');
@@ -88,7 +89,8 @@ export function createHeader(): HTMLElement {
   menuButton.append(menuImage);
   actions.append(loginButton, signupButton, menuButton);
   container.append(logo, navigation, actions);
-  header.append(container);
+  const mobileMenu: HTMLDialogElement = createMobileMenu(menuButton);
+  header.append(container, mobileMenu);
 
   return header;
 }
