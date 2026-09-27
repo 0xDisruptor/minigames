@@ -6,7 +6,7 @@ html:has(.game-dialog[open]) {
 }
 
 .game-dialog {
-  position: fixed;
+ position: fixed;
   inset: 0;
   box-sizing: border-box;
   width: tokens.$game-dialog-width;
@@ -131,6 +131,168 @@ html:has(.game-dialog[open]) {
     &,
     &::backdrop {
       transition: none;
+    }
+  }
+
+
+
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+    gap: tokens.$size-3;
+  }
+
+  &__heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: tokens.$size-2;
+  }
+
+  &__metrics {
+    display: flex;
+    align-items: center;
+    gap: tokens.$size-2;
+  }
+
+  &__metric {
+    display: inline-flex;
+    align-items: center;
+    gap: tokens.$size-05;
+    font-size: tokens.$label-large;
+    font-weight: tokens.$bold;
+    white-space: nowrap;
+
+    img {
+      display: block;
+      width: tokens.$size-3;
+      height: tokens.$size-3;
+    }
+  }
+
+  &__description {
+    margin: 0;
+    color: tokens.$on-bg;
+    font-size: tokens.$body-medium;
+    font-weight: tokens.$regular;
+    line-height: 1.25;
+  }
+
+  &__characteristics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: tokens.$size-2;
+    margin: 0;
+  }
+
+  &__characteristic {
+    min-width: 0;
+    padding: tokens.$size-1 tokens.$size-2;
+    border-radius: tokens.$corner-small;
+    background-color: tokens.$white;
+    box-shadow:
+      inset 0 0 0 tokens.$section-accent-border tokens.$outline-variant,
+      tokens.$level-1;
+
+    dt {
+      color: tokens.$on-bg;
+      font-size: tokens.$label-medium;
+      line-height: normal;
+    }
+
+    dd {
+      margin: tokens.$size-1 0 0;
+      font-size: tokens.$label-large;
+      font-weight: tokens.$bold;
+      line-height: normal;
+    }
+  }
+
+  &__actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: tokens.$size-2;
+  }
+
+  &__action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: tokens.$size-1;
+    min-width: 0;
+    min-height: tokens.$size-6;
+    padding: tokens.$size-1 tokens.$size-2;
+    border: 0;
+    border-radius: tokens.$corner-medium;
+    color: tokens.$on-primary;
+    background-color: tokens.$white;
+    box-shadow:
+      inset 0 0 0 tokens.$border-width tokens.$on-primary,
+      tokens.$level-1;
+    font: inherit;
+    font-size: tokens.$label-extra-large;
+    font-weight: tokens.$bold;
+    cursor: pointer;
+
+    &--play {
+      background-color: tokens.$primary;
+    }
+
+    &[aria-pressed='true'] {
+      background-color: tokens.$secondary;
+    }
+
+    @media (hover: hover) {
+      &:hover {
+        background-color: tokens.$surface;
+      }
+
+      &--play:hover {
+        background-color: tokens.$primary-high;
+      }
+    }
+
+    &:active {
+      background-color: tokens.$primary-low;
+    }
+
+    &:focus-visible {
+      outline: tokens.$border-width solid tokens.$tertiary;
+      outline-offset: tokens.$size-05;
+    }
+  }
+
+  &__favorite-icon {
+    font-size: tokens.$headline-medium;
+    font-weight: tokens.$regular;
+    line-height: 1;
+  }
+
+  &__action[aria-pressed='true'] &__favorite-icon {
+    color: tokens.$like;
+  }
+
+  @include mixins.mobile-down {
+    &__heading {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    &__characteristics {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    &__actions {
+      grid-template-columns: minmax(0, 1fr) tokens.$size-6;
+    }
+
+    &__action--favorite {
+      padding: 0;
+    }
+
+    &__favorite-text {
+      display: none;
     }
   }
 }

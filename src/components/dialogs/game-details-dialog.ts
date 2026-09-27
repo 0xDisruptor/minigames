@@ -3,6 +3,8 @@ import './game-details-dialog.scss';
 import coverUrl from '../../assets/images/tukoni-forest-keepers-hero.jpg';
 import closeUrl from '../../assets/icons/close.svg';
 
+import { createGameDetailsInfo } from './game-details-info';
+
 export function createGameDetailsDialog() {
   const dialog = document.createElement('dialog');
   dialog.className = 'game-dialog';
@@ -36,12 +38,9 @@ export function createGameDetailsDialog() {
   const content = document.createElement('div');
   content.className = 'game-dialog__content';
 
-  const title = document.createElement('h2');
-  title.id = 'game-dialog-title';
-  title.className = 'game-dialog__title';
-  title.textContent = 'Tukoni: Forest Keepers';
+  const gameInfo = createGameDetailsInfo();
 
-  content.append(title);
+  content.append(gameInfo.element);
   dialog.append(hero, content);
 
   let opener: HTMLElement | undefined;
@@ -60,6 +59,7 @@ export function createGameDetailsDialog() {
     }
 
     opener = trigger;
+    gameInfo.reset();
     dialog.showModal();
     dialog.scrollTop = 0;
   }
