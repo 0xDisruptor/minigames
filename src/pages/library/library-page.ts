@@ -113,13 +113,37 @@ function createCategoryFilters(): HTMLDivElement {
   return group;
 }
 
+function createSortControl(): HTMLSelectElement {
+  const select = document.createElement('select');
+  select.className = 'library-page__sort';
+  select.name = 'sort';
+  select.setAttribute('aria-label', 'Sort games by');
+
+  const options = [
+    { value: 'rating-desc', label: 'Rating ↓' },
+    { value: 'rating-asc', label: 'Rating ↑' },
+  ];
+
+  for (const { value, label } of options) {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = `Sort by: ${label}`;
+
+    select.append(option);
+  }
+
+  select.value = 'rating-desc';
+
+  return select;
+}
+
 export function createLibraryPage(): HTMLElement {
   const main = document.createElement('main');
   main.className = 'library-page';
 
   const controls = document.createElement('div');
   controls.className = 'library-page__controls';
-  controls.append(createCategoryFilters());
+  controls.append(createCategoryFilters(), createSortControl());
 
   main.append(createPageHeading(), controls);
 
