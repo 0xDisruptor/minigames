@@ -44,7 +44,7 @@ export function createGameDetailsDialog() {
   const records = createGameDetailsRecords();
   const comments = createGameDetailsComments();
 
-  content.append(gameInfo.element, records, comments);
+  content.append(gameInfo.element, records, comments.element);
   dialog.append(hero, content);
 
   let opener: HTMLElement | undefined;
@@ -64,6 +64,8 @@ export function createGameDetailsDialog() {
 
     opener = trigger;
     gameInfo.reset();
+    comments.reset();
+
     dialog.showModal();
     dialog.scrollTop = 0;
   }
