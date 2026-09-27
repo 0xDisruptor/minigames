@@ -73,6 +73,8 @@ export function createGameCard(game: LibraryGame): HTMLElement {
   const details = createElement('button', 'game-card__details');
   details.type = 'button';
   details.textContent = 'Details';
+  details.dataset.action = 'open-game-details';
+  details.setAttribute('aria-haspopup', 'dialog');
   details.setAttribute('aria-label', `Details about ${game.title}`);
 
   content.append(heading, price, description, metrics, details);
