@@ -5,6 +5,7 @@ import closeUrl from '../../assets/icons/close.svg';
 
 import { createGameDetailsInfo } from './game-details-info';
 import { createGameDetailsRecords } from './game-details-records';
+import { createGameDetailsComments } from './game-details-comment';
 
 export function createGameDetailsDialog() {
   const dialog = document.createElement('dialog');
@@ -41,8 +42,9 @@ export function createGameDetailsDialog() {
 
   const gameInfo = createGameDetailsInfo();
   const records = createGameDetailsRecords();
+  const comments = createGameDetailsComments();
 
-  content.append(gameInfo.element, records);
+  content.append(gameInfo.element, records, comments);
   dialog.append(hero, content);
 
   let opener: HTMLElement | undefined;
