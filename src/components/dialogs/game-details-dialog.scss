@@ -6,7 +6,7 @@ html:has(.game-dialog[open]) {
 }
 
 .game-dialog {
- position: fixed;
+  position: fixed;
   inset: 0;
   box-sizing: border-box;
   width: tokens.$game-dialog-width;
@@ -133,9 +133,6 @@ html:has(.game-dialog[open]) {
       transition: none;
     }
   }
-
-
-
 
   &__info {
     display: flex;

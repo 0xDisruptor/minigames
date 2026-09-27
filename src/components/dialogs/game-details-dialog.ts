@@ -4,6 +4,7 @@ import coverUrl from '../../assets/images/tukoni-forest-keepers-hero.jpg';
 import closeUrl from '../../assets/icons/close.svg';
 
 import { createGameDetailsInfo } from './game-details-info';
+import { createGameDetailsRecords } from './game-details-records';
 
 export function createGameDetailsDialog() {
   const dialog = document.createElement('dialog');
@@ -39,8 +40,9 @@ export function createGameDetailsDialog() {
   content.className = 'game-dialog__content';
 
   const gameInfo = createGameDetailsInfo();
+  const records = createGameDetailsRecords();
 
-  content.append(gameInfo.element);
+  content.append(gameInfo.element, records);
   dialog.append(hero, content);
 
   let opener: HTMLElement | undefined;
