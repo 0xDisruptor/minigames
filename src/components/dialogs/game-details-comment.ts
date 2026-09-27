@@ -9,6 +9,10 @@ interface CommentData {
   avatarTone: 'blue' | 'yellow' | 'lavender';
   isLiked: boolean;
 }
+interface GameDetailsComments {
+  element: HTMLElement;
+  reset: () => void;
+}
 
 const comments: CommentData[] = [
   {
@@ -40,7 +44,7 @@ const comments: CommentData[] = [
   },
 ];
 
-function setupTextareaAutoGrow(textarea: HTMLTextAreaElement): void {
+function setupTextareaAutoGrow(textarea: HTMLTextAreaElement): () => void {
   const resize = (): void => {
     textarea.style.height = 'auto';
 
@@ -53,6 +57,8 @@ function setupTextareaAutoGrow(textarea: HTMLTextAreaElement): void {
 
   textarea.addEventListener('input', resize);
   resize();
+
+  return resize;
 }
 
 function createAvatar(
@@ -144,7 +150,7 @@ function createCommentItem(comment: CommentData): HTMLLIElement {
   return item;
 }
 
-export function createGameDetailsComments(): HTMLElement {
+export function createGameDetailsComments(): GameDetailsComments {
   const section = document.createElement('section');
   section.className = 'game-comments';
   section.setAttribute('aria-labelledby', 'game-comments-title');
@@ -178,7 +184,7 @@ export function createGameDetailsComments(): HTMLElement {
     event.preventDefault();
   });
 
-  setupTextareaAutoGrow(textarea);
+  const resizeTextarea = setupTextareaAutoGrow(textarea);
 
   const list = document.createElement('ul');
   list.className = 'game-comments__list';
@@ -189,5 +195,25 @@ export function createGameDetailsComments(): HTMLElement {
 
   section.append(heading, form, list);
 
-  return section;
+  function reset(): void {
+    textarea.value = '';
+    textarea.style.height = '';
+    textarea.style.overflowY = 'hidden';
+    resizeTextarea();
+
+    const likeButtons = [...list.querySelectorAll<HTMLButtonElement>('.game-comments__like')];
+
+    for (const [index, comment] of comments.entries()) {
+      const likeButton = likeButtons[index];
+
+      if (likeButton) {
+        likeButton.setAttribute('aria-pressed', String(comment.isLiked));
+      }
+    }
+  }
+
+  return {
+    element: section,
+    reset,
+  };
 }
