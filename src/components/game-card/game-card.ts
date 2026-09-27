@@ -3,6 +3,8 @@ import type { LibraryGame } from '../../pages/library/library-data';
 import starUrl from '../../assets/icons/star.svg';
 import heartUrl from '../../assets/icons/heart.svg';
 
+import './game-card.scss';
+
 function createElement<K extends keyof HTMLElementTagNameMap>(
   tag: K,
   className: string,

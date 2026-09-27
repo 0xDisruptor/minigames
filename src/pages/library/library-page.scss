@@ -177,3 +177,64 @@
     }
   }
 }
+
+.library-page {
+  &__games {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: tokens.$size-3;
+    margin: 0;
+    padding: 0 tokens.$size-15 tokens.$size-5;
+    list-style: none;
+  }
+
+  &__game {
+    min-width: 0;
+  }
+
+  @media (width >= tokens.$library-grid-breakpoint) {
+    &__games {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    &__game {
+      &[data-game-id='vacation-cafe-simulator'] {
+        order: 1;
+      }
+
+      &[data-game-id='winter-burrow'] {
+        order: 2;
+      }
+
+      &[data-game-id='shelve-the-potions'] {
+        order: 3;
+      }
+
+      &[data-game-id='heartopia'] {
+        order: 4;
+      }
+
+      &[data-game-id='palia'] {
+        order: 5;
+      }
+
+      &[data-game-id='cat-mail-co'] {
+        order: 6;
+      }
+    }
+  }
+
+  @include mixins.tablet-down {
+    &__games {
+      padding-inline: tokens.$size-5;
+    }
+  }
+
+  @include mixins.mobile-down {
+    &__games {
+      gap: tokens.$size-2;
+      padding-inline: tokens.$size-2;
+      padding-bottom: tokens.$size-3;
+    }
+  }
+}
