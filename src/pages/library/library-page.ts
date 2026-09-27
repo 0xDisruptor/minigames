@@ -1,6 +1,7 @@
 import './library-page.scss';
 import { createGameCard } from '../../components/game-card/game-card';
 import { libraryGames } from './library-data';
+import { createPagination } from '../../components/pagination/pagination';
 
 const categories = ['All Games', 'Puzzle', 'Card', 'Match', 'Farm', 'Strategy', 'Arcade'];
 
@@ -164,7 +165,7 @@ export function createLibraryPage(): HTMLElement {
   controls.className = 'library-page__controls';
   controls.append(createCategoryFilters(), createSortControl());
 
-  main.append(createPageHeading(), controls, createGamesList());
+  main.append(createPageHeading(), controls, createGamesList(), createPagination());
 
   return main;
 }

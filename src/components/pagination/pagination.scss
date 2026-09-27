@@ -1,0 +1,88 @@
+@use '../../styles/tokens' as tokens;
+@use '../../styles/mixins' as mixins;
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: tokens.$size-2;
+  padding: tokens.$size-5 tokens.$size-2;
+
+  &__numbers {
+    display: flex;
+    gap: tokens.$size-2;
+  }
+
+  &__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    width: tokens.$size-5;
+    height: tokens.$size-5;
+    padding: 0;
+    border: tokens.$border-width solid tokens.$on-primary;
+    border-radius: tokens.$corner-full;
+    color: tokens.$on-primary;
+    background-color: tokens.$white;
+    font-family: tokens.$inter;
+    font-size: tokens.$label-large;
+    font-weight: tokens.$bold;
+    line-height: 1;
+    cursor: pointer;
+
+    &[aria-current='page'] {
+      color: tokens.$white;
+      background-color: tokens.$on-primary;
+    }
+
+    @media (hover: hover) {
+      &:hover:not(:disabled):not([aria-current='page']) {
+        background-color: tokens.$secondary;
+      }
+    }
+
+    &:active:not(:disabled):not([aria-current='page']) {
+      background-color: tokens.$primary;
+    }
+
+    &:focus-visible {
+      outline: tokens.$border-width solid tokens.$tertiary;
+      outline-offset: tokens.$size-05;
+    }
+
+    &:disabled {
+      border-color: tokens.$outline;
+      color: tokens.$outline-variant;
+      background-color: transparent;
+      cursor: not-allowed;
+    }
+  }
+
+  &__arrow {
+    font-size: tokens.$headline-medium;
+    font-weight: tokens.$regular;
+  }
+
+  @include mixins.mobile-down {
+    gap: tokens.$size-1;
+    padding-block: tokens.$size-3;
+
+    &__numbers {
+      gap: tokens.$size-1;
+    }
+
+    &:not(.pagination--last-page) {
+      .pagination__numbers > :last-child {
+        display: none;
+      }
+    }
+
+    &--last-page {
+      .pagination__numbers > :first-child {
+        display: none;
+      }
+    }
+  }
+}
