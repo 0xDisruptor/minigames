@@ -184,7 +184,7 @@
     grid-template-columns: minmax(0, 1fr);
     gap: tokens.$size-3;
     margin: 0;
-    padding: 0 tokens.$size-15 tokens.$size-5;
+    padding: 0 tokens.$size-15;
     list-style: none;
   }
 
@@ -234,7 +234,6 @@
     &__games {
       gap: tokens.$size-2;
       padding-inline: tokens.$size-2;
-      padding-bottom: tokens.$size-3;
     }
   }
 }
