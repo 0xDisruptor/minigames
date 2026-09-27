@@ -1,0 +1,136 @@
+@use '../../styles/tokens' as tokens;
+@use '../../styles/mixins' as mixins;
+
+html:has(.game-dialog[open]) {
+  overflow: hidden;
+}
+
+.game-dialog {
+  position: fixed;
+  inset: 0;
+  box-sizing: border-box;
+  width: tokens.$game-dialog-width;
+  max-width: calc(100% - #{tokens.$size-4});
+  max-height: calc(100dvh - #{tokens.$size-4});
+  margin: auto;
+  padding: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 0;
+  border-radius: tokens.$corner-extra-large;
+  color: tokens.$on-primary;
+  background-color: tokens.$bg;
+  box-shadow: tokens.$level-3;
+  font-family: tokens.$inter;
+  opacity: 0;
+
+  transition:
+    opacity tokens.$game-dialog-animation-duration ease,
+    display tokens.$game-dialog-animation-duration allow-discrete,
+    overlay tokens.$game-dialog-animation-duration allow-discrete;
+
+  &[open] {
+    opacity: 1;
+  }
+
+  &::backdrop {
+    background-color: tokens.$auth-backdrop;
+    opacity: 0;
+
+    transition:
+      opacity tokens.$game-dialog-animation-duration ease,
+      display tokens.$game-dialog-animation-duration allow-discrete,
+      overlay tokens.$game-dialog-animation-duration allow-discrete;
+  }
+
+  &[open]::backdrop {
+    opacity: 1;
+  }
+
+  @starting-style {
+    &[open],
+    &[open]::backdrop {
+      opacity: 0;
+    }
+  }
+
+  &__hero {
+    position: relative;
+  }
+
+  &__cover {
+    display: block;
+    width: 100%;
+    height: tokens.$game-dialog-cover-height;
+    object-fit: cover;
+  }
+
+  &__close {
+    position: absolute;
+    top: tokens.$size-2;
+    right: tokens.$size-2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: tokens.$size-5;
+    height: tokens.$size-5;
+    padding: 0;
+    border: tokens.$border-width solid tokens.$on-primary;
+    border-radius: tokens.$corner-full;
+    background-color: tokens.$white;
+    box-shadow: tokens.$level-1;
+    cursor: pointer;
+
+    img {
+      display: block;
+      width: tokens.$size-3;
+      height: tokens.$size-3;
+    }
+
+    @media (hover: hover) {
+      &:hover {
+        background-color: tokens.$secondary;
+      }
+    }
+
+    &:active {
+      background-color: tokens.$primary;
+    }
+
+    &:focus-visible {
+      outline: tokens.$border-width solid tokens.$tertiary;
+      outline-offset: tokens.$size-05;
+    }
+  }
+
+  &__content {
+    padding: tokens.$size-3;
+  }
+
+  &__title {
+    margin: 0;
+    overflow-wrap: anywhere;
+    font-size: tokens.$display-medium;
+    font-weight: tokens.$bold;
+    line-height: normal;
+  }
+
+  @include mixins.mobile-down {
+    max-width: 100%;
+    max-height: 100dvh;
+    box-shadow: none;
+
+    &__close {
+      width: tokens.$size-4;
+      height: tokens.$size-4;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &,
+    &::backdrop {
+      transition: none;
+    }
+  }
+}
