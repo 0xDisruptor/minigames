@@ -41,7 +41,9 @@ function createLinkGroup(title: string, labels: readonly string[]): HTMLElement 
 
   for (const label of labels) {
     const item: HTMLLIElement = document.createElement('li');
-    item.append(createLink(label, '#/', 'footer__link'));
+    const href = label === 'Library' ? '#/library' : '#/';
+
+    item.append(createLink(label, href, 'footer__link'));
     list.append(item);
   }
 

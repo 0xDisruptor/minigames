@@ -51,11 +51,11 @@ export function createHeader(onAuth: OpenAuth): HTMLElement {
     const link: HTMLAnchorElement = document.createElement('a');
 
     link.className = 'header__link';
-    link.href = '#/';
+    link.href = label === 'Library' ? '#/library' : '#/';
     link.textContent = label;
 
-    if (label === 'Home') {
-      link.setAttribute('aria-current', 'page');
+    if (label === 'Home' || label === 'Library') {
+      link.dataset.navPage = label.toLowerCase();
     }
 
     item.append(link);

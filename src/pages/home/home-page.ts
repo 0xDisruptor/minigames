@@ -41,6 +41,9 @@ function createHero(): HTMLElement {
   button.className = 'hero__button';
   button.type = 'button';
   button.textContent = 'Browse Library';
+  button.addEventListener('click', (): void => {
+    location.hash = '/library';
+  });
 
   content.append(title, description, button);
   section.append(background, content);

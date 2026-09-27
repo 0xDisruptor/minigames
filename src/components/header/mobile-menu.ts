@@ -59,11 +59,11 @@ export function createMobileMenu(trigger: HTMLButtonElement, onAuth: OpenAuth): 
     const link: HTMLAnchorElement = document.createElement('a');
 
     link.className = 'mobile-menu__link';
-    link.href = '#/';
+    link.href = label === 'Library' ? '#/library' : '#/';
     link.textContent = label;
 
-    if (label === 'Home') {
-      link.setAttribute('aria-current', 'page');
+    if (label === 'Home' || label === 'Library') {
+      link.dataset.navPage = label.toLowerCase();
     }
 
     link.addEventListener('click', (): void => {
