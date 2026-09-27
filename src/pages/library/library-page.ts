@@ -1,4 +1,6 @@
 import './library-page.scss';
+import { createGameCard } from '../../components/game-card/game-card';
+import { libraryGames } from './library-data';
 
 const categories = ['All Games', 'Puzzle', 'Card', 'Match', 'Farm', 'Strategy', 'Arcade'];
 
@@ -137,6 +139,23 @@ function createSortControl(): HTMLSelectElement {
   return select;
 }
 
+function createGamesList(): HTMLUListElement {
+  const list = document.createElement('ul');
+  list.className = 'library-page__games';
+  list.setAttribute('aria-label', 'Games');
+
+  for (const game of libraryGames) {
+    const item = document.createElement('li');
+    item.className = 'library-page__game';
+    item.dataset.gameId = game.id;
+    item.append(createGameCard(game));
+
+    list.append(item);
+  }
+
+  return list;
+}
+
 export function createLibraryPage(): HTMLElement {
   const main = document.createElement('main');
   main.className = 'library-page';
@@ -145,7 +164,7 @@ export function createLibraryPage(): HTMLElement {
   controls.className = 'library-page__controls';
   controls.append(createCategoryFilters(), createSortControl());
 
-  main.append(createPageHeading(), controls);
+  main.append(createPageHeading(), controls, createGamesList());
 
   return main;
 }
