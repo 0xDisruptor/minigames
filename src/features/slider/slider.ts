@@ -1,7 +1,15 @@
 import './slider.scss';
 
-import { sliderGames } from './slider-data';
 import type { SliderGame } from './slider-data';
+
+import { getFeaturedGames } from '../../services/api';
+import { resolveGameImage } from '../../services/media';
+import {
+  createEmptyState,
+  createErrorState,
+  createSkeleton,
+} from '../../components/feedback/feedback';
+import { showSnackbar } from '../../components/snackbar/snackbar';
 
 import arrowLeftUrl from '../../assets/icons/arrow-left.svg';
 import arrowRightUrl from '../../assets/icons/arrow-right.svg';
@@ -98,8 +106,7 @@ function createCard(game: SliderGame, index: number): HTMLLIElement {
   return item;
 }
 
-function getCircularOffset(index: number, activeIndex: number): number {
-  const count = sliderGames.length;
+function getCircularOffset(index: number, activeIndex: number, count: number): number {
   let offset = index - activeIndex;
 
   if (offset > Math.floor(count / 2)) {
@@ -145,7 +152,7 @@ function updateSliderPositions(track: HTMLUListElement, activeIndex: number): vo
   const items = [...track.querySelectorAll<HTMLLIElement>('.slider__item')];
 
   for (const [index, item] of items.entries()) {
-    const offset = getCircularOffset(index, activeIndex);
+    const offset = getCircularOffset(index, activeIndex, items.length);
     const card = item.querySelector<HTMLButtonElement>('.slider__card');
 
     item.className = 'slider__item';
@@ -166,6 +173,7 @@ interface AutoplayController {
   pause: () => void;
   resume: () => void;
   reset: () => void;
+  stop: () => void;
 }
 
 function createAutoplay(onAdvance: () => void): AutoplayController {
@@ -173,6 +181,7 @@ function createAutoplay(onAdvance: () => void): AutoplayController {
   let startedAt = 0;
   let remainingTime = AUTOPLAY_DELAY;
   let isPaused = false;
+  let isStopped = false;
 
   const clearTimer = (): void => {
     if (timerId === undefined) {
@@ -186,6 +195,9 @@ function createAutoplay(onAdvance: () => void): AutoplayController {
   const schedule = (delay: number): void => {
     clearTimer();
 
+    if (isStopped) {
+      return;
+    }
     remainingTime = delay;
     startedAt = performance.now();
 
@@ -195,7 +207,7 @@ function createAutoplay(onAdvance: () => void): AutoplayController {
 
       onAdvance();
 
-      if (!isPaused) {
+      if (!isPaused && !isStopped) {
         schedule(AUTOPLAY_DELAY);
       }
     }, delay);
@@ -241,6 +253,10 @@ function createAutoplay(onAdvance: () => void): AutoplayController {
     pause,
     resume,
     reset,
+    stop: (): void => {
+      isStopped = true;
+      clearTimer();
+    },
   };
 }
 
@@ -339,7 +355,7 @@ function enableSwipe(
   );
 }
 
-export function createSlider(): HTMLElement {
+export function createSlider(): { element: HTMLElement; destroy: () => void } {
   const section = createElement('section', 'slider');
   section.setAttribute('aria-labelledby', 'new-games-title');
 
@@ -350,7 +366,6 @@ export function createSlider(): HTMLElement {
   heading.textContent = 'New Games';
 
   const controls = createElement('div', 'slider__controls');
-
   controls.setAttribute('role', 'group');
   controls.setAttribute('aria-label', 'Carousel controls');
 
@@ -360,43 +375,138 @@ export function createSlider(): HTMLElement {
   controls.append(previousButton, nextButton);
   header.append(heading, controls);
 
-  const track = createElement('ul', 'slider__track');
+  const content = createElement('div', 'slider__content');
 
-  track.setAttribute('aria-label', 'Featured games');
-
-  for (const [index, game] of sliderGames.entries()) {
-    track.append(createCard(game, index));
-  }
-
+  let games: readonly SliderGame[] = [];
+  let track: HTMLUListElement | undefined;
   let activeIndex = 0;
+  let autoplay: AutoplayController | undefined;
+  let request: AbortController | undefined;
+  let isDestroyed = false;
+  let hasFailed = false;
 
   const showPrevious = (): void => {
-    activeIndex = (activeIndex - 1 + sliderGames.length) % sliderGames.length;
+    if (!track || games.length < 2) {
+      return;
+    }
+
+    activeIndex = (activeIndex - 1 + games.length) % games.length;
     updateSliderPositions(track, activeIndex);
   };
 
   const showNext = (): void => {
-    activeIndex = (activeIndex + 1) % sliderGames.length;
+    if (!track || games.length < 2) {
+      return;
+    }
+
+    activeIndex = (activeIndex + 1) % games.length;
     updateSliderPositions(track, activeIndex);
   };
 
-  const autoplay = createAutoplay(showNext);
-
   previousButton.addEventListener('click', (): void => {
     showPrevious();
-    autoplay.reset();
+    autoplay?.reset();
   });
 
   nextButton.addEventListener('click', (): void => {
     showNext();
-    autoplay.reset();
+    autoplay?.reset();
   });
 
-  enableSwipe(track, showPrevious, showNext, autoplay);
+  async function loadGames(): Promise<void> {
+    if (isDestroyed) {
+      return;
+    }
 
-  updateSliderPositions(track, activeIndex);
+    request?.abort();
+    autoplay?.stop();
 
-  section.append(header, track);
+    autoplay = undefined;
+    track = undefined;
+    games = [];
 
-  return section;
+    previousButton.disabled = true;
+    nextButton.disabled = true;
+
+    content.setAttribute('aria-busy', 'true');
+    content.replaceChildren(createSkeleton('Loading featured games'));
+
+    const controller = new AbortController();
+    request = controller;
+
+    try {
+      const response = await getFeaturedGames(controller.signal);
+
+      if (isDestroyed || controller.signal.aborted) {
+        return;
+      }
+
+      games = response.map((game) => ({
+        id: game.slug,
+        title: game.name,
+        image: resolveGameImage(game.cardImage),
+        rating: game.rating,
+        likes: game.likesCount,
+      }));
+
+      activeIndex = 0;
+
+      if (hasFailed) {
+        showSnackbar('Featured games loaded successfully.', 'success');
+        hasFailed = false;
+      }
+
+      if (games.length === 0) {
+        content.replaceChildren(createEmptyState('No featured games available.'));
+        return;
+      }
+
+      track = createElement('ul', 'slider__track');
+      track.setAttribute('aria-label', 'Featured games');
+
+      for (const [index, game] of games.entries()) {
+        track.append(createCard(game, index));
+      }
+
+      updateSliderPositions(track, activeIndex);
+      content.replaceChildren(track);
+
+      previousButton.disabled = games.length < 2;
+      nextButton.disabled = games.length < 2;
+
+      if (games.length > 1) {
+        autoplay = createAutoplay(showNext);
+        enableSwipe(track, showPrevious, showNext, autoplay);
+      }
+    } catch {
+      if (isDestroyed || controller.signal.aborted) {
+        return;
+      }
+
+      content.replaceChildren(
+        createErrorState('Could not load featured games. Please try again.', (): void => {
+          void loadGames();
+        }),
+      );
+
+      hasFailed = true;
+      showSnackbar('Failed to load featured games.', 'error');
+    } finally {
+      if (request === controller && !isDestroyed) {
+        content.setAttribute('aria-busy', 'false');
+      }
+    }
+  }
+
+  section.append(header, content);
+  void loadGames();
+
+  return {
+    element: section,
+    destroy: (): void => {
+      isDestroyed = true;
+      request?.abort();
+      autoplay?.stop();
+    },
+  };
 }
