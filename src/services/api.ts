@@ -350,3 +350,80 @@ export async function getGameDetails(
 
   return response.data;
 }
+
+export interface GameComment {
+  readonly commentId: string;
+  readonly authorName: string;
+  readonly text: string;
+  readonly likesCount: number;
+  readonly isLikedByCurrentUser: boolean;
+  readonly createdAt: string;
+}
+
+export interface GameCommentsResponse {
+  readonly data: readonly GameComment[];
+  readonly meta: {
+    readonly totalComments: number;
+  };
+}
+
+function isGameComment(value: unknown): value is GameComment {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'commentId' in value &&
+    typeof value.commentId === 'string' &&
+    'authorName' in value &&
+    typeof value.authorName === 'string' &&
+    'text' in value &&
+    typeof value.text === 'string' &&
+    'likesCount' in value &&
+    typeof value.likesCount === 'number' &&
+    Number.isSafeInteger(value.likesCount) &&
+    value.likesCount >= 0 &&
+    'isLikedByCurrentUser' in value &&
+    typeof value.isLikedByCurrentUser === 'boolean' &&
+    'createdAt' in value &&
+    typeof value.createdAt === 'string' &&
+    Number.isFinite(Date.parse(value.createdAt))
+  );
+}
+
+export async function getGameComments(
+  gameSlug: string,
+  signal?: AbortSignal,
+): Promise<GameCommentsResponse> {
+  const parameters = new URLSearchParams({
+    limit: '3',
+    sort: 'newest',
+  });
+
+  const response = await getJson(
+    `games/${encodeURIComponent(gameSlug)}/comments?${parameters.toString()}`,
+    signal,
+  );
+
+  if (
+    typeof response !== 'object' ||
+    response === null ||
+    !('data' in response) ||
+    !Array.isArray(response.data) ||
+    !response.data.every(isGameComment) ||
+    !('meta' in response) ||
+    typeof response.meta !== 'object' ||
+    response.meta === null ||
+    !('totalComments' in response.meta) ||
+    typeof response.meta.totalComments !== 'number' ||
+    !Number.isSafeInteger(response.meta.totalComments) ||
+    response.meta.totalComments < 0
+  ) {
+    throw new Error('Invalid game comments response');
+  }
+
+  return {
+    data: response.data,
+    meta: {
+      totalComments: response.meta.totalComments,
+    },
+  };
+}

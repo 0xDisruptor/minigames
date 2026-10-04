@@ -1,76 +1,24 @@
 import './game-details-comment.scss';
 
-interface CommentData {
-  authorName: string;
-  text: string;
-  likesCount: number;
-  createdAt: string;
-  ago: string;
-  avatarTone: 'blue' | 'yellow' | 'lavender';
-  isLiked: boolean;
-}
+import { getGameComments } from '../../services/api';
+import type { GameComment } from '../../services/api';
+import { formatRelativeTime } from '../../utils/relative-time';
+import { createEmptyState, createErrorState, createSkeleton } from '../feedback/feedback';
+import { showSnackbar } from '../snackbar/snackbar';
+
 interface GameDetailsComments {
-  element: HTMLElement;
+  readonly element: HTMLElement;
+  load: (gameSlug: string) => Promise<void>;
   reset: () => void;
 }
 
-const comments: CommentData[] = [
-  {
-    authorName: 'ForestDweller',
-    text: `The hand-drawn art is absolutely magical 🍄 Every location feels like a page from a children's storybook. The mushroom village made me cry happy tears!`,
-    likesCount: 12,
-    createdAt: '2026-08-30T07:00:00Z',
-    ago: '3 hours ago',
-    avatarTone: 'blue',
-    isLiked: false,
-  },
-  {
-    authorName: 'HerbalTeaLover',
-    text: `Perfect cozy evening game — brew a cup of chamomile, wrap in a blanket and help the little Tukoni prepare for winter. The puzzles are gentle but satisfying.`,
-    likesCount: 5,
-    createdAt: '2026-08-29T15:30:00Z',
-    ago: '1 day ago',
-    avatarTone: 'yellow',
-    isLiked: false,
-  },
-  {
-    authorName: 'CottageCoreMia',
-    text: `I want to live inside this game forever 🌿 The NPCs are so charming, the tea recipes are real, and the atmosphere is pure warmth and calm.`,
-    likesCount: 8,
-    createdAt: '2026-08-27T20:10:00Z',
-    ago: '3 days ago',
-    avatarTone: 'lavender',
-    isLiked: true,
-  },
-];
+const avatarTones = ['blue', 'yellow', 'lavender'] as const;
 
-function setupTextareaAutoGrow(textarea: HTMLTextAreaElement): () => void {
-  const resize = (): void => {
-    textarea.style.height = 'auto';
-
-    const maxHeight = Number(getComputedStyle(textarea).maxHeight.replace('px', ''));
-    const nextHeight = Math.min(textarea.scrollHeight, maxHeight);
-
-    textarea.style.height = `${nextHeight}px`;
-    textarea.style.overflowY = textarea.scrollHeight > maxHeight ? 'auto' : 'hidden';
-  };
-
-  textarea.addEventListener('input', resize);
-  resize();
-
-  return resize;
-}
-
-function createAvatar(
-  letter: string,
-  tone: 'blue' | 'yellow' | 'lavender' | 'user',
-): HTMLSpanElement {
+function createAvatar(letter: string, tone: string): HTMLSpanElement {
   const avatar = document.createElement('span');
-
   avatar.className = `game-comments__avatar game-comments__avatar--${tone}`;
   avatar.textContent = letter;
   avatar.setAttribute('aria-hidden', 'true');
-
   return avatar;
 }
 
@@ -89,13 +37,13 @@ function createSendIcon(): SVGSVGElement {
   path.setAttribute('stroke-linejoin', 'round');
 
   svg.append(path);
-
   return svg;
 }
 
-function createCommentItem(comment: CommentData): HTMLLIElement {
+function createCommentItem(comment: GameComment, index: number): HTMLLIElement {
   const item = document.createElement('li');
   item.className = 'game-comments__item';
+  item.dataset.commentId = comment.commentId;
 
   const header = document.createElement('div');
   header.className = 'game-comments__item-header';
@@ -103,7 +51,8 @@ function createCommentItem(comment: CommentData): HTMLLIElement {
   const authorBlock = document.createElement('div');
   authorBlock.className = 'game-comments__author-block';
 
-  const avatar = createAvatar(comment.authorName.charAt(0), comment.avatarTone);
+  const tone = avatarTones[index % avatarTones.length] ?? 'blue';
+  const avatar = createAvatar(comment.authorName.charAt(0), tone);
 
   const author = document.createElement('strong');
   author.className = 'game-comments__author';
@@ -114,7 +63,7 @@ function createCommentItem(comment: CommentData): HTMLLIElement {
   const time = document.createElement('time');
   time.className = 'game-comments__time';
   time.dateTime = comment.createdAt;
-  time.textContent = comment.ago;
+  time.textContent = formatRelativeTime(comment.createdAt);
 
   header.append(authorBlock, time);
 
@@ -125,12 +74,16 @@ function createCommentItem(comment: CommentData): HTMLLIElement {
   const likeButton = document.createElement('button');
   likeButton.type = 'button';
   likeButton.className = 'game-comments__like';
-  likeButton.setAttribute('aria-pressed', String(comment.isLiked));
-  likeButton.setAttribute('aria-label', `Like comment by ${comment.authorName}`);
+  likeButton.disabled = true;
+  likeButton.setAttribute('aria-pressed', String(comment.isLikedByCurrentUser));
+  likeButton.setAttribute(
+    'aria-label',
+    `${comment.likesCount} likes on comment by ${comment.authorName}`,
+  );
 
   const heart = document.createElement('span');
   heart.className = 'game-comments__heart';
-  heart.textContent = '♡';
+  heart.textContent = comment.isLikedByCurrentUser ? '♥' : '♡';
   heart.setAttribute('aria-hidden', 'true');
 
   const likes = document.createElement('span');
@@ -138,16 +91,23 @@ function createCommentItem(comment: CommentData): HTMLLIElement {
   likes.textContent = String(comment.likesCount);
 
   likeButton.append(heart, likes);
-
-  likeButton.addEventListener('click', (): void => {
-    const isLiked = likeButton.getAttribute('aria-pressed') === 'true';
-
-    likeButton.setAttribute('aria-pressed', String(!isLiked));
-  });
-
   item.append(header, text, likeButton);
 
   return item;
+}
+
+function createLoadingComments(): HTMLUListElement {
+  const list = document.createElement('ul');
+  list.className = 'game-comments__list';
+
+  for (let index = 0; index < 3; index += 1) {
+    const item = document.createElement('li');
+    item.className = 'game-comments__item';
+    item.append(createSkeleton(`Loading comment ${index + 1}`));
+    list.append(item);
+  }
+
+  return list;
 }
 
 export function createGameDetailsComments(): GameDetailsComments {
@@ -158,7 +118,7 @@ export function createGameDetailsComments(): GameDetailsComments {
   const heading = document.createElement('h3');
   heading.id = 'game-comments-title';
   heading.className = 'game-comments__title';
-  heading.textContent = `Comments (${comments.length})`;
+  heading.textContent = 'Comments';
 
   const form = document.createElement('form');
   form.className = 'game-comments__form';
@@ -170,11 +130,13 @@ export function createGameDetailsComments(): GameDetailsComments {
   textarea.name = 'comment';
   textarea.placeholder = 'Write a comment...';
   textarea.rows = 1;
+  textarea.disabled = true;
   textarea.setAttribute('aria-label', 'Write a comment');
 
   const submitButton = document.createElement('button');
   submitButton.type = 'submit';
   submitButton.className = 'game-comments__submit';
+  submitButton.disabled = true;
   submitButton.setAttribute('aria-label', 'Submit comment');
   submitButton.append(createSendIcon());
 
@@ -184,36 +146,86 @@ export function createGameDetailsComments(): GameDetailsComments {
     event.preventDefault();
   });
 
-  const resizeTextarea = setupTextareaAutoGrow(textarea);
+  const results = document.createElement('div');
+  results.className = 'game-comments__results';
 
-  const list = document.createElement('ul');
-  list.className = 'game-comments__list';
+  section.append(heading, form, results);
 
-  for (const comment of comments) {
-    list.append(createCommentItem(comment));
-  }
+  let request: AbortController | undefined;
+  let currentSlug: string | undefined;
+  let hasFailed = false;
 
-  section.append(heading, form, list);
+  async function load(gameSlug: string): Promise<void> {
+    if (currentSlug !== gameSlug) {
+      hasFailed = false;
+    }
 
-  function reset(): void {
-    textarea.value = '';
-    textarea.style.height = '';
-    textarea.style.overflowY = 'hidden';
-    resizeTextarea();
+    currentSlug = gameSlug;
+    request?.abort();
 
-    const likeButtons = [...list.querySelectorAll<HTMLButtonElement>('.game-comments__like')];
+    const controller = new AbortController();
+    request = controller;
 
-    for (const [index, comment] of comments.entries()) {
-      const likeButton = likeButtons[index];
+    heading.textContent = 'Comments';
+    results.setAttribute('aria-busy', 'true');
+    results.replaceChildren(createLoadingComments());
 
-      if (likeButton) {
-        likeButton.setAttribute('aria-pressed', String(comment.isLiked));
+    try {
+      const response = await getGameComments(gameSlug, controller.signal);
+
+      if (controller.signal.aborted) {
+        return;
+      }
+
+      heading.textContent = `Comments (${response.meta.totalComments})`;
+
+      if (response.data.length === 0) {
+        results.replaceChildren(createEmptyState('No comments yet.'));
+      } else {
+        const list = document.createElement('ul');
+        list.className = 'game-comments__list';
+
+        for (const [index, comment] of response.data.entries()) {
+          list.append(createCommentItem(comment, index));
+        }
+
+        results.replaceChildren(list);
+      }
+
+      if (hasFailed) {
+        showSnackbar('Comments loaded successfully.', 'success');
+        hasFailed = false;
+      }
+    } catch {
+      if (controller.signal.aborted) {
+        return;
+      }
+
+      hasFailed = true;
+
+      results.replaceChildren(
+        createErrorState('Could not load comments. Please try again.', (): void => {
+          void load(gameSlug);
+        }),
+      );
+
+      showSnackbar('Failed to load comments.', 'error');
+    } finally {
+      if (request === controller) {
+        results.setAttribute('aria-busy', 'false');
       }
     }
   }
 
-  return {
-    element: section,
-    reset,
-  };
+  function reset(): void {
+    request?.abort();
+    request = undefined;
+    currentSlug = undefined;
+    hasFailed = false;
+    heading.textContent = 'Comments';
+    results.setAttribute('aria-busy', 'false');
+    results.replaceChildren();
+  }
+
+  return { element: section, load, reset };
 }
