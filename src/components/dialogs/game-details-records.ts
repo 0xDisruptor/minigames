@@ -1,12 +1,8 @@
 import './game-details-records.scss';
+import type { GameRecord } from '../../services/api';
+import { createEmptyState } from '../feedback/feedback';
 
-const records = [
-  { medal: '🥇', name: 'ForestSpirit', score: '356,700 pts', ago: '2 days ago' },
-  { medal: '🥈', name: 'TeaBrewer', score: '332,400pts', ago: '5 days ago' },
-  { medal: '🥉', name: 'HerbalistPath', score: '308,900 pts', ago: '1 week ago' },
-];
-
-export function createGameDetailsRecords(): HTMLElement {
+export function createGameDetailsRecords(records: readonly GameRecord[]): HTMLElement {
   const section = document.createElement('section');
   section.className = 'game-records';
   section.setAttribute('aria-labelledby', 'game-records-title');
@@ -20,9 +16,20 @@ export function createGameDetailsRecords(): HTMLElement {
   trophy.setAttribute('aria-hidden', 'true');
 
   heading.append(trophy, document.createTextNode('Top Records'));
+  section.append(heading);
+
+  if (records.length === 0) {
+    section.append(createEmptyState('No records yet.'));
+    return section;
+  }
 
   const list = document.createElement('ol');
   list.className = 'game-records__list';
+
+  const scoreFormatter = new Intl.NumberFormat('en');
+  const dateFormatter = new Intl.DateTimeFormat('en', {
+    dateStyle: 'medium',
+  });
 
   for (const record of records) {
     const item = document.createElement('li');
@@ -30,26 +37,26 @@ export function createGameDetailsRecords(): HTMLElement {
 
     const medal = document.createElement('span');
     medal.className = 'game-records__medal';
-    medal.textContent = record.medal;
+    medal.textContent = ['🥇', '🥈', '🥉'][record.position - 1] ?? String(record.position);
     medal.setAttribute('aria-hidden', 'true');
 
     const name = document.createElement('span');
     name.className = 'game-records__name';
-    name.textContent = record.name;
+    name.textContent = record.playerName;
 
     const score = document.createElement('span');
     score.className = 'game-records__score';
-    score.textContent = record.score;
+    score.textContent = `${scoreFormatter.format(record.score)} pts`;
 
-    const ago = document.createElement('span');
-    ago.className = 'game-records__ago';
-    ago.textContent = record.ago;
+    const date = document.createElement('time');
+    date.className = 'game-records__ago';
+    date.dateTime = record.achievedAt;
+    date.textContent = dateFormatter.format(new Date(record.achievedAt));
 
-    item.append(medal, name, score, ago);
+    item.append(medal, name, score, date);
     list.append(item);
   }
 
-  section.append(heading, list);
-
+  section.append(list);
   return section;
 }

@@ -3,6 +3,7 @@ import heroBackgroundUrl from '../../assets/images/hero-background.png';
 import { createSlider } from '../../features/slider/slider';
 import { createLeaderboard } from '../../components/leaderboard/leaderboard';
 import { createDeveloperCta } from '../../components/developer-cta/developer-cta';
+import { getPageUrl, navigate } from '../../app/navigation';
 
 function createHero(): HTMLElement {
   const section: HTMLElement = document.createElement('section');
@@ -42,7 +43,7 @@ function createHero(): HTMLElement {
   button.type = 'button';
   button.textContent = 'Browse Library';
   button.addEventListener('click', (): void => {
-    location.hash = '/library';
+    navigate(getPageUrl('/library'));
   });
 
   content.append(title, description, button);
@@ -54,7 +55,20 @@ function createHero(): HTMLElement {
 export function createHomePage(): HTMLElement {
   const main: HTMLElement = document.createElement('main');
   main.className = 'home-page';
-  main.append(createHero(), createSlider(), createLeaderboard(), createDeveloperCta());
+
+  const slider = createSlider();
+  const leaderboard = createLeaderboard();
+
+  main.append(createHero(), slider.element, leaderboard.element, createDeveloperCta());
+
+  main.addEventListener(
+    'page-dispose',
+    (): void => {
+      slider.destroy();
+      leaderboard.destroy();
+    },
+    { once: true },
+  );
 
   return main;
 }

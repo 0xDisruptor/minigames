@@ -1,5 +1,7 @@
 import './leaderboard.scss';
-
+import { getLeaderboardPlayers } from '../../services/api';
+import { createEmptyState, createErrorState, createSkeleton } from '../feedback/feedback';
+import { showSnackbar } from '../snackbar/snackbar';
 interface Player {
   readonly rank: number;
   readonly name: string;
@@ -9,54 +11,6 @@ interface Player {
   readonly streak: number;
   readonly favorite: string;
 }
-
-const players: readonly Player[] = [
-  {
-    rank: 1,
-    name: 'Alex_Pro99',
-    initials: 'AP',
-    games: 142,
-    score: 94_250,
-    streak: 12,
-    favorite: 'Heartopia',
-  },
-  {
-    rank: 2,
-    name: 'CozyGamer_x',
-    initials: 'CG',
-    games: 118,
-    score: 81_400,
-    streak: 8,
-    favorite: 'Cat Mail Co.',
-  },
-  {
-    rank: 3,
-    name: 'MatchMaster',
-    initials: 'MM',
-    games: 98,
-    score: 72_110,
-    streak: 5,
-    favorite: 'Tiny Glade',
-  },
-  {
-    rank: 4,
-    name: 'BubblePop',
-    initials: 'BP',
-    games: 87,
-    score: 65_900,
-    streak: 3,
-    favorite: 'Whisper of the House',
-  },
-  {
-    rank: 5,
-    name: 'SudokuGod',
-    initials: 'SG',
-    games: 74,
-    score: 59_320,
-    streak: 2,
-    favorite: 'Cat Chess',
-  },
-];
 
 function createText(text: string, className: string): HTMLSpanElement {
   const span: HTMLSpanElement = document.createElement('span');
@@ -131,28 +85,45 @@ function createPlayerRow(player: Player): HTMLTableRowElement {
   return row;
 }
 
-export function createLeaderboard(): HTMLElement {
-  const section: HTMLElement = document.createElement('section');
+function getPlayerInitials(name: string): string {
+  const parts = name
+    .replaceAll(/([a-z])([A-Z])/g, '$1 $2')
+    .split(/[\s_-]+/)
+    .filter(Boolean);
+
+  const initials =
+    parts.length > 1
+      ? parts
+          .slice(0, 2)
+          .map((part) => part.charAt(0))
+          .join('')
+      : (parts[0]?.slice(0, 2) ?? '?');
+
+  return initials.toUpperCase();
+}
+
+export function createLeaderboard(): { element: HTMLElement; destroy: () => void } {
+  const section = document.createElement('section');
   section.className = 'leaderboard';
   section.setAttribute('aria-labelledby', 'leaderboard-title');
 
-  const title: HTMLHeadingElement = document.createElement('h2');
+  const title = document.createElement('h2');
   title.id = 'leaderboard-title';
   title.className = 'leaderboard__title';
 
-  const titleText: HTMLSpanElement = document.createElement('span');
+  const titleText = document.createElement('span');
   titleText.append('Top Players', createText(' This Week', 'leaderboard__title-extra'));
   title.append(titleText);
 
-  const wrapper: HTMLDivElement = document.createElement('div');
+  const wrapper = document.createElement('div');
   wrapper.className = 'leaderboard__wrapper';
 
-  const table: HTMLTableElement = document.createElement('table');
+  const table = document.createElement('table');
   table.className = 'leaderboard__table';
   table.setAttribute('aria-labelledby', title.id);
 
-  const head: HTMLTableSectionElement = document.createElement('thead');
-  const headerRow: HTMLTableRowElement = document.createElement('tr');
+  const head = document.createElement('thead');
+  const headerRow = document.createElement('tr');
 
   const columns: readonly [string, string, string][] = [
     ['Rank', 'Rank', 'rank'],
@@ -164,7 +135,7 @@ export function createLeaderboard(): HTMLElement {
   ];
 
   for (const [fullLabel, shortLabel, className] of columns) {
-    const cell: HTMLTableCellElement = document.createElement('th');
+    const cell = document.createElement('th');
     cell.scope = 'col';
     cell.className = `leaderboard__${className}`;
     cell.append(
@@ -176,15 +147,86 @@ export function createLeaderboard(): HTMLElement {
 
   head.append(headerRow);
 
-  const body: HTMLTableSectionElement = document.createElement('tbody');
-
-  for (const player of players) {
-    body.append(createPlayerRow(player));
-  }
-
+  const body = document.createElement('tbody');
   table.append(head, body);
-  wrapper.append(table);
   section.append(title, wrapper);
 
-  return section;
+  let request: AbortController | undefined;
+  let isDestroyed = false;
+  let hasFailed = false;
+
+  async function loadPlayers(): Promise<void> {
+    if (isDestroyed) {
+      return;
+    }
+
+    request?.abort();
+    body.replaceChildren();
+
+    wrapper.setAttribute('aria-busy', 'true');
+    wrapper.replaceChildren(createSkeleton('Loading top players'));
+
+    const controller = new AbortController();
+    request = controller;
+
+    try {
+      const players = await getLeaderboardPlayers(controller.signal);
+
+      if (isDestroyed || controller.signal.aborted) {
+        return;
+      }
+
+      if (players.length === 0) {
+        wrapper.replaceChildren(createEmptyState('No players available.'));
+      } else {
+        for (const player of players) {
+          body.append(
+            createPlayerRow({
+              rank: player.rank,
+              name: player.playerName,
+              initials: getPlayerInitials(player.playerName),
+              games: player.gamesPlayed,
+              score: player.totalScore,
+              streak: player.streakDays,
+              favorite: player.favoriteGameName,
+            }),
+          );
+        }
+
+        wrapper.replaceChildren(table);
+      }
+
+      if (hasFailed) {
+        showSnackbar('Top players loaded successfully.', 'success');
+        hasFailed = false;
+      }
+    } catch {
+      if (isDestroyed || controller.signal.aborted) {
+        return;
+      }
+
+      wrapper.replaceChildren(
+        createErrorState('Could not load top players. Please try again.', (): void => {
+          void loadPlayers();
+        }),
+      );
+
+      hasFailed = true;
+      showSnackbar('Failed to load top players.', 'error');
+    } finally {
+      if (request === controller && !isDestroyed) {
+        wrapper.setAttribute('aria-busy', 'false');
+      }
+    }
+  }
+
+  void loadPlayers();
+
+  return {
+    element: section,
+    destroy: (): void => {
+      isDestroyed = true;
+      request?.abort();
+    },
+  };
 }

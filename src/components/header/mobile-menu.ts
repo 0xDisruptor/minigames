@@ -2,6 +2,7 @@ import './mobile-menu.scss';
 import logoUrl from '../../assets/images/logo.svg';
 import closeUrl from '../../assets/icons/close.svg';
 import type { OpenAuth } from '../dialogs/auth-dialog';
+import { getPageUrl } from '../../app/navigation';
 
 export function createMobileMenu(trigger: HTMLButtonElement, onAuth: OpenAuth): HTMLDialogElement {
   const dialog: HTMLDialogElement = document.createElement('dialog');
@@ -59,7 +60,7 @@ export function createMobileMenu(trigger: HTMLButtonElement, onAuth: OpenAuth): 
     const link: HTMLAnchorElement = document.createElement('a');
 
     link.className = 'mobile-menu__link';
-    link.href = label === 'Library' ? '#/library' : '#/';
+    link.href = getPageUrl(label === 'Library' ? '/library' : '/');
     link.textContent = label;
 
     if (label === 'Home' || label === 'Library') {

@@ -4,53 +4,55 @@ import { createRegisterForm } from './register-form';
 
 export type AuthMode = 'login' | 'register';
 
-export type OpenAuth = (mode: AuthMode, trigger: HTMLElement) => void;
+export type OpenAuth = (mode: AuthMode, trigger?: HTMLElement) => void;
 
 interface AuthDialog {
   readonly element: HTMLDialogElement;
   readonly open: OpenAuth;
+  readonly close: () => void;
 }
 
-const animationDuration: number = 180;
+const animationDuration = 180;
 
 function getAnimationDuration(): number {
   return matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : animationDuration;
 }
 
-export function createAuthDialog(): AuthDialog {
-  const dialog: HTMLDialogElement = document.createElement('dialog');
+export function createAuthDialog(
+  onModeChange?: (mode: AuthMode) => void,
+  onRequestClose?: () => void,
+): AuthDialog {
+  const dialog = document.createElement('dialog');
   dialog.className = 'auth-dialog';
   dialog.setAttribute('aria-label', 'Account access');
 
-  const tabList: HTMLDivElement = document.createElement('div');
+  const tabList = document.createElement('div');
   tabList.className = 'auth-dialog__tabs';
   tabList.setAttribute('role', 'tablist');
   tabList.setAttribute('aria-label', 'Login or registration');
 
   const modes: readonly AuthMode[] = ['login', 'register'];
+
   const tabs: Record<AuthMode, HTMLButtonElement> = {
     login: document.createElement('button'),
     register: document.createElement('button'),
   };
+
   const panels: Record<AuthMode, HTMLDivElement> = {
     login: document.createElement('div'),
     register: document.createElement('div'),
   };
 
   let activeMode: AuthMode = 'login';
-  let isClosing: boolean = false;
   let restoreTarget: HTMLElement | undefined;
+  let hasStartedOnBackdrop = false;
 
   function selectMode(mode: AuthMode, shouldFocusTab: boolean): void {
-    if (isClosing) {
-      return;
-    }
-
-    const hasChanged: boolean = mode !== activeMode;
+    const hasChanged = mode !== activeMode;
     activeMode = mode;
 
     for (const current of modes) {
-      const isSelected: boolean = current === mode;
+      const isSelected = current === mode;
       tabs[current].setAttribute('aria-selected', String(isSelected));
       tabs[current].tabIndex = isSelected ? 0 : -1;
       panels[current].hidden = !isSelected;
@@ -65,6 +67,7 @@ export function createAuthDialog(): AuthDialog {
     }
 
     dialog.scrollTop = 0;
+
     panels[mode].animate(
       [
         { opacity: 0, transform: 'translateY(4px)' },
@@ -77,18 +80,28 @@ export function createAuthDialog(): AuthDialog {
     );
   }
 
-  const loginForm: HTMLFormElement = createLoginForm((): void => {
-    selectMode('register', true);
+  function requestMode(mode: AuthMode): void {
+    if (onModeChange) {
+      onModeChange(mode);
+      return;
+    }
+
+    selectMode(mode, true);
+  }
+
+  const loginForm = createLoginForm((): void => {
+    requestMode('register');
   });
-  const registerForm: HTMLFormElement = createRegisterForm((): void => {
-    selectMode('login', true);
+
+  const registerForm = createRegisterForm((): void => {
+    requestMode('login');
   });
 
   panels.login.append(loginForm);
   panels.register.append(registerForm);
 
   for (const mode of modes) {
-    const tab: HTMLButtonElement = tabs[mode];
+    const tab = tabs[mode];
     tab.type = 'button';
     tab.id = `auth-tab-${mode}`;
     tab.className = 'auth-dialog__tab';
@@ -96,14 +109,14 @@ export function createAuthDialog(): AuthDialog {
     tab.setAttribute('role', 'tab');
     tab.setAttribute('aria-controls', `auth-panel-${mode}`);
 
-    const panel: HTMLDivElement = panels[mode];
+    const panel = panels[mode];
     panel.id = `auth-panel-${mode}`;
     panel.className = 'auth-dialog__panel';
     panel.setAttribute('role', 'tabpanel');
     panel.setAttribute('aria-labelledby', tab.id);
 
     tab.addEventListener('click', (): void => {
-      selectMode(mode, true);
+      requestMode(mode);
     });
 
     tabList.append(tab);
@@ -112,48 +125,45 @@ export function createAuthDialog(): AuthDialog {
   tabList.addEventListener('keydown', (event: KeyboardEvent): void => {
     if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
       event.preventDefault();
-      selectMode(activeMode === 'login' ? 'register' : 'login', true);
+      requestMode(activeMode === 'login' ? 'register' : 'login');
     } else if (event.key === 'Home' || event.key === 'End') {
       event.preventDefault();
-      selectMode(event.key === 'Home' ? 'login' : 'register', true);
+      requestMode(event.key === 'Home' ? 'login' : 'register');
     }
   });
 
   dialog.append(tabList, panels.login, panels.register);
   selectMode('login', false);
 
-  async function closeDialog(): Promise<void> {
-    if (isClosing || !dialog.open) {
+  function close(): void {
+    if (!dialog.open) {
       return;
     }
-
-    isClosing = true;
-    dialog.classList.add('is-closing');
 
     for (const animation of dialog.getAnimations()) {
       animation.cancel();
     }
 
-    const animation: Animation = dialog.animate([{ opacity: 1 }, { opacity: 0 }], {
-      duration: getAnimationDuration(),
-      easing: 'ease-in',
-      fill: 'forwards',
-    });
-
-    await animation.finished;
     dialog.close();
-    animation.cancel();
+    document.documentElement.classList.remove('has-open-auth');
+  }
+
+  function requestClose(): void {
+    if (onRequestClose) {
+      onRequestClose();
+      return;
+    }
+
+    close();
   }
 
   dialog.addEventListener('cancel', (event: Event): void => {
     event.preventDefault();
-    void closeDialog();
+    requestClose();
   });
 
-  let hasStartedOnBackdrop: boolean = false;
-
   function isOutside(event: MouseEvent): boolean {
-    const bounds: DOMRect = dialog.getBoundingClientRect();
+    const bounds = dialog.getBoundingClientRect();
 
     return (
       event.clientX < bounds.left ||
@@ -169,16 +179,18 @@ export function createAuthDialog(): AuthDialog {
 
   dialog.addEventListener('click', (event: MouseEvent): void => {
     if (hasStartedOnBackdrop && event.target === dialog && isOutside(event)) {
-      void closeDialog();
+      requestClose();
     }
 
     hasStartedOnBackdrop = false;
   });
 
   dialog.addEventListener('close', (): void => {
-    isClosing = false;
+    if (dialog.open) {
+      return;
+    }
+
     hasStartedOnBackdrop = false;
-    dialog.classList.remove('is-closing');
     document.documentElement.classList.remove('has-open-auth');
     loginForm.reset();
     registerForm.reset();
@@ -186,13 +198,11 @@ export function createAuthDialog(): AuthDialog {
     if (restoreTarget?.isConnected) {
       restoreTarget.focus({ preventScroll: true });
     }
+
+    restoreTarget = undefined;
   });
 
-  const open: OpenAuth = (mode: AuthMode, trigger: HTMLElement): void => {
-    if (isClosing) {
-      return;
-    }
-
+  const open: OpenAuth = (mode: AuthMode, trigger?: HTMLElement): void => {
     selectMode(mode, false);
 
     if (!dialog.open) {
@@ -210,5 +220,5 @@ export function createAuthDialog(): AuthDialog {
     tabs[mode].focus({ preventScroll: true });
   };
 
-  return { element: dialog, open };
+  return { element: dialog, open, close };
 }

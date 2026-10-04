@@ -1,6 +1,7 @@
 import './header.scss';
 import logoUrl from '../../assets/images/logo.svg';
 import menuUrl from '../../assets/icons/menu.svg';
+import { getPageUrl } from '../../app/navigation';
 import { createMobileMenu } from './mobile-menu';
 import type { OpenAuth } from '../dialogs/auth-dialog';
 
@@ -51,7 +52,7 @@ export function createHeader(onAuth: OpenAuth): HTMLElement {
     const link: HTMLAnchorElement = document.createElement('a');
 
     link.className = 'header__link';
-    link.href = label === 'Library' ? '#/library' : '#/';
+    link.href = getPageUrl(label === 'Library' ? '/library' : '/');
     link.textContent = label;
 
     if (label === 'Home' || label === 'Library') {
