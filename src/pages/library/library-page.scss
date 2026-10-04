@@ -1,0 +1,244 @@
+@use '../../styles/tokens' as tokens;
+@use '../../styles/mixins' as mixins;
+
+.library-page {
+  max-width: tokens.$breakpoint-desktop;
+  margin-inline: auto;
+  color: tokens.$on-primary;
+  font-family: tokens.$inter;
+
+  &__heading {
+    display: flex;
+    flex-direction: column;
+    gap: tokens.$size-1;
+    padding: tokens.$size-5 tokens.$size-15;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: tokens.$display-large;
+    font-weight: tokens.$bold;
+    line-height: normal;
+  }
+
+  &__description {
+    margin: 0;
+    color: tokens.$on-bg;
+    font-size: tokens.$body-large;
+    font-weight: tokens.$medium;
+    line-height: normal;
+  }
+
+  &__controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: tokens.$size-2;
+    padding: tokens.$size-2 tokens.$size-15;
+  }
+
+  &__categories {
+    display: flex;
+    gap: tokens.$size-2;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    user-select: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  &__chip {
+    flex-shrink: 0;
+    padding: tokens.$size-1 tokens.$size-2;
+    border: 0;
+    border-radius: tokens.$corner-full;
+    color: tokens.$on-primary;
+    background-color: tokens.$white;
+    box-shadow: inset 0 0 0 tokens.$border-width tokens.$on-primary;
+    font: inherit;
+    font-size: tokens.$label-large;
+    font-weight: tokens.$bold;
+    line-height: normal;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &[aria-pressed='true'] {
+      background-color: tokens.$primary;
+    }
+
+    @media (hover: hover) {
+      &:hover {
+        background-color: tokens.$secondary;
+      }
+
+      &[aria-pressed='true']:hover {
+        background-color: tokens.$primary-high;
+      }
+    }
+
+    &:active {
+      background-color: tokens.$primary-low;
+    }
+
+    &:focus-visible {
+      outline: tokens.$border-width solid tokens.$tertiary;
+      outline-offset: calc(-1 * tokens.$size-05);
+    }
+  }
+
+  &__sort {
+    box-sizing: border-box;
+    flex-shrink: 0;
+    width: tokens.$library-sort-width-desktop;
+    height: tokens.$library-sort-height-desktop;
+    padding-inline: tokens.$size-2;
+    border: tokens.$border-width solid tokens.$on-primary;
+    border-radius: tokens.$corner-full;
+    color: tokens.$on-primary;
+    background-color: tokens.$white;
+    font: inherit;
+    font-size: tokens.$label-large;
+    font-weight: tokens.$bold;
+    cursor: pointer;
+
+    @media (hover: hover) {
+      &:hover {
+        background-color: tokens.$secondary;
+      }
+    }
+
+    &:focus-visible {
+      outline: tokens.$border-width solid tokens.$tertiary;
+      outline-offset: tokens.$size-05;
+    }
+
+    &:active {
+      background-color: tokens.$surface;
+    }
+  }
+
+  @include mixins.tablet-down {
+    &__sort {
+      width: tokens.$library-sort-width-tablet;
+      height: tokens.$library-sort-height-compact;
+    }
+
+    &__heading {
+      padding: tokens.$size-3 tokens.$size-5;
+    }
+
+    &__title {
+      font-size: tokens.$display-medium;
+    }
+
+    &__description {
+      font-size: tokens.$body-medium;
+    }
+
+    &__controls {
+      flex-direction: column;
+      align-items: flex-start;
+      padding-inline: tokens.$size-5;
+    }
+
+    &__categories {
+      gap: tokens.$size-1;
+    }
+  }
+
+  @include mixins.mobile-down {
+    &__sort {
+      width: 100%;
+      font-size: tokens.$label-medium;
+    }
+    &__heading {
+      padding: tokens.$size-2;
+    }
+
+    &__title {
+      font-size: tokens.$display-small;
+    }
+
+    &__description {
+      font-size: tokens.$body-small;
+    }
+
+    &__controls {
+      padding-inline: tokens.$size-2;
+    }
+
+    &__chip {
+      font-size: tokens.$label-medium;
+    }
+  }
+}
+
+.library-page {
+  &__games {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: tokens.$size-3;
+    margin: 0;
+    padding: 0 tokens.$size-15;
+    list-style: none;
+  }
+
+  &__game {
+    min-width: 0;
+  }
+
+  @media (width >= tokens.$library-grid-breakpoint) {
+    &__games {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    &__game {
+      &[data-game-id='vacation-cafe-simulator'] {
+        order: 1;
+      }
+
+      &[data-game-id='winter-burrow'] {
+        order: 2;
+      }
+
+      &[data-game-id='shelve-the-potions'] {
+        order: 3;
+      }
+
+      &[data-game-id='heartopia'] {
+        order: 4;
+      }
+
+      &[data-game-id='palia'] {
+        order: 5;
+      }
+
+      &[data-game-id='cat-mail-co'] {
+        order: 6;
+      }
+    }
+  }
+
+  @include mixins.tablet-down {
+    &__games {
+      padding-inline: tokens.$size-5;
+    }
+  }
+
+  @include mixins.mobile-down {
+    &__games {
+      gap: tokens.$size-2;
+      padding-inline: tokens.$size-2;
+    }
+  }
+}
+
+.library-page__category-state {
+  flex: 1;
+  min-width: 0;
+}

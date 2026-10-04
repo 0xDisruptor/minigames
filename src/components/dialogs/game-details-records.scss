@@ -1,0 +1,70 @@
+@use '../../styles/tokens' as tokens;
+@use '../../styles/mixins' as mixins;
+
+.game-records {
+  margin-top: tokens.$size-3;
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: tokens.$size-1;
+    margin: 0 0 tokens.$size-2;
+    color: tokens.$on-primary;
+    font-size: tokens.$body-medium;
+    font-weight: tokens.$bold;
+    line-height: normal;
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: tokens.$size-1;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__item {
+    display: grid;
+    grid-template-columns:
+      tokens.$size-2
+      minmax(0, 1fr)
+      max-content
+      max-content;
+    align-items: center;
+    gap: tokens.$size-2;
+    padding: tokens.$size-2;
+    border-radius: tokens.$corner-small;
+    color: tokens.$on-primary;
+    background-color: tokens.$white;
+    font-size: tokens.$body-small;
+    line-height: normal;
+  }
+
+  &__medal {
+    text-align: center;
+  }
+
+  &__name {
+    min-width: 0;
+    font-weight: tokens.$bold;
+    overflow-wrap: anywhere;
+  }
+
+  &__score {
+    font-weight: tokens.$bold;
+    white-space: nowrap;
+  }
+
+  &__ago {
+    color: tokens.$on-bg;
+    font-size: tokens.$label-medium;
+    white-space: nowrap;
+  }
+
+  @include mixins.mobile-down {
+    &__item {
+      gap: tokens.$size-1;
+    }
+  }
+}

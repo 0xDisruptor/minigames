@@ -1,0 +1,203 @@
+@use '../../styles/tokens' as tokens;
+@use '../../styles/mixins' as mixins;
+
+.header {
+  color: tokens.$on-primary;
+  background-color: tokens.$bg;
+  font-family: tokens.$inter;
+  line-height: normal;
+
+  box-shadow: inset 0 (tokens.$border-width * -1) 0 tokens.$on-primary;
+
+  &__container {
+    display: flex;
+    align-items: center;
+    gap: tokens.$size-4;
+    min-height: tokens.$header-height-desktop;
+    padding-inline: tokens.$size-10;
+  }
+
+  &__logo {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: tokens.$size-1;
+    color: inherit;
+    font-size: tokens.$headline-medium;
+    font-weight: tokens.$bold;
+    text-decoration: none;
+    white-space: nowrap;
+
+    img {
+      display: block;
+      width: tokens.$size-4;
+      height: tokens.$size-4;
+    }
+  }
+
+  &__nav {
+    margin-left: auto;
+  }
+
+  &__list {
+    display: flex;
+    align-items: center;
+    gap: tokens.$size-5;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__link {
+    color: tokens.$on-bg;
+    font-size: tokens.$body-medium;
+    font-weight: tokens.$medium;
+    text-decoration: none;
+    white-space: nowrap;
+
+    &[aria-current='page'] {
+      color: tokens.$on-primary;
+      font-weight: tokens.$bold;
+    }
+
+    &:hover {
+      color: tokens.$tertiary;
+    }
+
+    &:active {
+      color: tokens.$on-primary;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: tokens.$size-2;
+  }
+
+  &__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: tokens.$btn-medium;
+    border: 0;
+    border-radius: tokens.$corner-small;
+    color: tokens.$on-primary;
+    font: inherit;
+    font-size: tokens.$label-large;
+    font-weight: tokens.$bold;
+    line-height: tokens.$header-button-line-height;
+    white-space: nowrap;
+    cursor: pointer;
+
+    box-shadow: inset 0 (tokens.$border-width * -1) 0 tokens.$on-primary;
+
+    &--login {
+      background-color: transparent;
+
+      &:hover {
+        background-color: tokens.$surface;
+      }
+
+      &:active {
+        background-color: tokens.$secondary;
+      }
+    }
+
+    &--signup {
+      background-color: tokens.$primary;
+
+      &:hover {
+        background-color: tokens.$primary-high;
+      }
+
+      &:active {
+        background-color: tokens.$primary-low;
+      }
+    }
+
+    &:disabled {
+      color: tokens.$on-bg;
+      background-color: tokens.$outline;
+      cursor: not-allowed;
+    }
+  }
+
+  &__menu-button {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: tokens.$size-4;
+    height: tokens.$size-4;
+    padding: 0;
+    border: 0;
+    border-radius: tokens.$corner-small;
+    background: transparent;
+    cursor: pointer;
+
+    img {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  &__logo:focus-visible,
+  &__link:focus-visible,
+  &__button:focus-visible,
+  &__menu-button:focus-visible {
+    outline: tokens.$border-width solid tokens.$tertiary;
+    outline-offset: tokens.$size-05;
+  }
+
+  @include mixins.header-compact {
+    &__container {
+      gap: tokens.$size-2;
+      padding-inline: tokens.$size-2;
+    }
+
+    &__logo {
+      font-size: tokens.$headline-small;
+    }
+
+    &__list {
+      gap: tokens.$size-2;
+    }
+  }
+
+  @include mixins.tablet-down {
+    &__container {
+      min-height: tokens.$size-9;
+      padding-inline: tokens.$size-5;
+    }
+
+    &__nav,
+    &__button--login {
+      display: none;
+    }
+
+    &__actions {
+      margin-left: auto;
+    }
+
+    &__button {
+      padding: tokens.$size-1 tokens.$size-2;
+    }
+
+    &__menu-button {
+      display: inline-flex;
+    }
+  }
+
+  @include mixins.mobile-down {
+    &__container {
+      min-height: tokens.$size-8;
+      padding-inline: tokens.$size-2;
+    }
+
+    &__button--signup {
+      display: none;
+    }
+  }
+}

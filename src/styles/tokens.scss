@@ -1,0 +1,208 @@
+$border-width: 2px;
+
+// base
+$white: #ffffff;
+$black: #000000;
+
+// general
+$bg: #f9f8f3;
+$on-bg: #5f5d75;
+$on-big-low: #736380;
+$bg-footer: #1e1b3a;
+$bg-footer-low: #2a264f;
+$bg-footer-lowest: #3c376e;
+$on-bg-footer: #b9b5c9;
+$surface: #fff9e5;
+$surface-low: #fffcf5;
+$primary: #ffd02b;
+$primary-low: #fde047;
+$primary-high: #e5bb00;
+$on-primary: #242145;
+$secondary: #f0eeff;
+$tertiary: #3a2ebf;
+$like: #ff4b4b;
+$error: #b3261e;
+$price-free: #0b8a8f;
+
+// Borders
+$outline: #e5e7eb;
+$outline-variant: #d2d2d2;
+
+// Additional
+$avatar-random-1: #e9eef6;
+$avatar-random-2: #a3e2c9;
+$avatar-random-3: #bce3ff;
+$avatar-random-4: #ffc6ff;
+$avatar-random-5: #e8dff5;
+
+// Font Tokens
+// size
+$display-large: 56px;
+$display-medium: 36px;
+$display-small: 24px;
+
+$headline-large: 32px;
+$headline-medium: 24px;
+$headline-small: 20px;
+
+$body-large: 18px;
+$body-medium: 16px;
+$body-small: 14px;
+
+$label-extra-large: 16px;
+$label-large: 14px;
+$label-medium: 12px;
+$label-small: 10px;
+
+// Font Weight
+$regular: 400;
+$medium: 500;
+$bold: 700;
+$extra-bold: 800;
+
+// Font Family
+$inter: 'Inter', sans-serif;
+$roboto: 'Roboto', sans-serif;
+
+// Size
+
+$size-05: 4px;
+$size-1: 8px;
+$size-2: 16px;
+$size-3: 24px;
+$size-4: 32px;
+$size-5: 40px;
+$size-6: 48px;
+$size-7: 56px;
+$size-8: 64px;
+$size-9: 72px;
+$size-10: 80px;
+$size-11: 88px;
+$size-12: 96px;
+$size-13: 104px;
+$size-14: 112px;
+$size-15: 120px;
+
+// Corner / Border Radius
+
+$corner-extra-small: 4px;
+$corner-small: 8px;
+$corner-medium: 12px;
+$corner-large: 16px;
+$corner-extra-large: 24px;
+$corner-full: 9999px;
+
+// Button
+
+$btn-large: 24px 16px;
+$btn-medium: 10px 20px;
+$btn-small: 16px 8px;
+$btn-icon: 8px;
+
+// Shadow
+
+$level-1: 4px 4px $on-primary;
+$level-2: 6px 6px $on-primary;
+$level-3: 8px 8px $on-primary;
+
+// Reference viewport widths
+$viewport-mobile: 375px;
+
+// Responsive breakpoints
+$breakpoint-tablet: 768px;
+$breakpoint-desktop: 1920px;
+$breakpoint-mobile: 600px;
+
+$header-height-desktop: 85px;
+$header-button-line-height: 17px;
+
+$breakpoint-header-compact: 1024px;
+
+// Menu animation duration
+$menu-animation-duration: 200ms;
+
+// Hero
+$hero-card-desktop: 640px;
+$hero-card-tablet: 480px;
+$hero-background-opacity: 0.2;
+$hero-overlay-opacity: 0.65;
+$hero-border-desktop: 3px;
+$hero-border-tablet: 2.5px;
+
+$slider-height-desktop: 384px;
+$slider-height-tablet: 280px;
+$slider-height-mobile: 200px;
+
+$slider-info-threshold: 288px;
+$slider-card-border: 2.5px;
+$section-accent-border: 1.5px;
+
+$slider-overlay: linear-gradient(
+  to bottom,
+  transparent,
+  rgba($black, 0.4) 17.308%,
+  rgba($black, 0.85) 46.154%
+);
+
+// Leaderboard
+$leaderboard-header-desktop: 64px;
+$leaderboard-header-compact: 44px;
+$leaderboard-row-desktop: 72px;
+$leaderboard-row-tablet: 60px;
+$leaderboard-row-mobile: 56px;
+$leaderboard-avatar-tablet: 28px;
+$leaderboard-divider: 1px;
+
+// Developer CTA
+$developer-image-height-desktop: 480px;
+$developer-image-height-tablet: 300px;
+$developer-image-height-mobile: 228px;
+$developer-copy-width-desktop: 600px;
+$developer-copy-width-tablet: 480px;
+
+$developer-shadow: 0 8px 24px rgba($black, 0.15);
+
+// Footer
+$footer-description-width: 400px;
+$footer-credit-icon-compact: 20px;
+$footer-divider-width: 1px;
+
+// Auth dialog
+$auth-dialog-width: 420px;
+$auth-dialog-border: 3px;
+$auth-animation-duration: 180ms;
+$auth-backdrop: rgba($bg-footer, 0.65);
+
+// Library sorting
+$library-sort-width-desktop: 190px;
+$library-sort-width-tablet: 182px;
+$library-sort-height-desktop: 44px;
+$library-sort-height-compact: 40px;
+
+// Library game cards
+$library-grid-breakpoint: 1600px;
+
+$game-card-image-width-desktop: 320px;
+$game-card-image-width-tablet: 270px;
+
+$game-card-height-desktop: 200px;
+$game-card-height-tablet: 150px;
+$game-card-image-height-mobile: 160px;
+$game-card-content-height-mobile: 232px;
+
+$game-card-description-line-height: 22px;
+$game-card-description-line-height-compact: 20px;
+
+$game-card-button-height-desktop: 37px;
+$game-card-button-height-tablet: 32px;
+
+// Game Details dialog
+$game-dialog-width: 600px;
+$game-dialog-cover-height: 220px;
+$game-dialog-animation-duration: 180ms;
+
+$game-comment-avatar-size: 28px;
+$game-comment-form-avatar-size: 40px;
+$game-comment-submit-size: 40px;
+$game-comment-textarea-min-height: 48px;
+$game-comment-textarea-max-height: 88px;
