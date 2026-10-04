@@ -293,3 +293,12 @@ html:has(.game-dialog[open]) {
     }
   }
 }
+
+.game-dialog__media {
+  min-height: tokens.$game-dialog-cover-height;
+
+  > .feedback-skeleton {
+    height: tokens.$game-dialog-cover-height;
+    border-radius: 0;
+  }
+}
