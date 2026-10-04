@@ -70,6 +70,7 @@ export function createGameDetailsDialog() {
     }
 
     request?.abort();
+    comments.reset();
 
     const controller = new AbortController();
     request = controller;
@@ -104,7 +105,7 @@ export function createGameDetailsDialog() {
         comments.element,
       );
 
-      comments.reset();
+      void comments.load(slug);
 
       if (hasFailed) {
         showSnackbar('Game details loaded successfully.', 'success');
@@ -200,6 +201,7 @@ export function createGameDetailsDialog() {
 
   dialog.addEventListener('close', (): void => {
     request?.abort();
+    comments.reset();
     request = undefined;
     currentSlug = undefined;
     wasPointerStartedOutside = false;
