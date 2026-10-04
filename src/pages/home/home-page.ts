@@ -3,6 +3,7 @@ import heroBackgroundUrl from '../../assets/images/hero-background.png';
 import { createSlider } from '../../features/slider/slider';
 import { createLeaderboard } from '../../components/leaderboard/leaderboard';
 import { createDeveloperCta } from '../../components/developer-cta/developer-cta';
+import { getPageUrl, navigate } from '../../app/navigation';
 
 function createHero(): HTMLElement {
   const section: HTMLElement = document.createElement('section');
@@ -42,7 +43,7 @@ function createHero(): HTMLElement {
   button.type = 'button';
   button.textContent = 'Browse Library';
   button.addEventListener('click', (): void => {
-    location.hash = '/library';
+    navigate(getPageUrl('/library'));
   });
 
   content.append(title, description, button);

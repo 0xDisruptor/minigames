@@ -1,5 +1,7 @@
 import './footer.scss';
 
+import { getPageUrl } from '../../app/navigation';
+
 import logoUrl from '../../assets/images/logo.svg';
 import shareUrl from '../../assets/icons/community-share.svg';
 import chatUrl from '../../assets/icons/community-chat.svg';
@@ -41,7 +43,7 @@ function createLinkGroup(title: string, labels: readonly string[]): HTMLElement 
 
   for (const label of labels) {
     const item: HTMLLIElement = document.createElement('li');
-    const href = label === 'Library' ? '#/library' : '#/';
+    const href = getPageUrl(label === 'Library' ? '/library' : '/');
 
     item.append(createLink(label, href, 'footer__link'));
     list.append(item);
