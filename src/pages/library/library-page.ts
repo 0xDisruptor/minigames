@@ -1,7 +1,8 @@
 import './library-page.scss';
 import { createGameCard } from '../../components/game-card/game-card';
 import type { LibraryGame } from './library-data';
-import { getGames } from '../../services/api';
+import { getCategories, getGames } from '../../services/api';
+import type { Category } from '../../services/api';
 import { resolveGameImage } from '../../services/media';
 import {
   createEmptyState,
@@ -10,8 +11,6 @@ import {
 } from '../../components/feedback/feedback';
 import { showSnackbar } from '../../components/snackbar/snackbar';
 import { createPagination } from '../../components/pagination/pagination';
-
-const categories = ['All Games', 'Puzzle', 'Card', 'Match', 'Farm', 'Strategy', 'Arcade'];
 
 function createPageHeading(): HTMLElement {
   const header = document.createElement('header');
@@ -94,7 +93,11 @@ function enableMouseDrag(container: HTMLElement): void {
   );
 }
 
-function createCategoryFilters(): HTMLDivElement {
+function createCategoryFilters(
+  categories: readonly Category[],
+  activeCategory: string,
+  onChange: (category: string) => void,
+): HTMLDivElement {
   const group = document.createElement('div');
   group.className = 'library-page__categories';
   group.setAttribute('role', 'group');
@@ -106,13 +109,20 @@ function createCategoryFilters(): HTMLDivElement {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'library-page__chip';
-    button.textContent = category;
-    button.setAttribute('aria-pressed', String(category === 'All Games'));
+    button.textContent = category.label;
+    button.dataset.category = category.slug;
+    button.setAttribute('aria-pressed', String(category.slug === activeCategory));
 
     button.addEventListener('click', (): void => {
+      if (button.getAttribute('aria-pressed') === 'true') {
+        return;
+      }
+
       for (const item of buttons) {
         item.setAttribute('aria-pressed', String(item === button));
       }
+
+      onChange(category.slug);
     });
 
     buttons.push(button);
@@ -187,32 +197,46 @@ export function createLibraryPage(): HTMLElement {
 
   const controls = document.createElement('div');
   controls.className = 'library-page__controls';
-  controls.append(createCategoryFilters(), createSortControl());
+
+  const categoryState = document.createElement('div');
+  categoryState.className = 'library-page__category-state';
+
+  const sortControl = createSortControl();
+  controls.append(categoryState, sortControl);
 
   const results = document.createElement('div');
   results.className = 'library-page__results';
+  results.setAttribute('aria-busy', 'true');
+  results.replaceChildren(createLoadingGames());
 
   main.append(createPageHeading(), controls, results, createPagination());
 
-  let request: AbortController | undefined;
+  let activeCategory = 'all';
+  let gamesRequest: AbortController | undefined;
+  let categoriesRequest: AbortController | undefined;
   let isDestroyed = false;
-  let hasFailed = false;
+  let hasGamesFailed = false;
+  let hasCategoriesFailed = false;
 
   async function loadGames(): Promise<void> {
     if (isDestroyed) {
       return;
     }
 
-    request?.abort();
+    gamesRequest?.abort();
 
     results.setAttribute('aria-busy', 'true');
     results.replaceChildren(createLoadingGames());
 
     const controller = new AbortController();
-    request = controller;
+    gamesRequest = controller;
 
     try {
-      const response = await getGames(controller.signal);
+      const response = await getGames(controller.signal, {
+        category: activeCategory,
+        sort: sortControl.value,
+        page: 1,
+      });
 
       if (isDestroyed || controller.signal.aborted) {
         return;
@@ -235,9 +259,9 @@ export function createLibraryPage(): HTMLElement {
         results.replaceChildren(createGamesList(games));
       }
 
-      if (hasFailed) {
+      if (hasGamesFailed) {
         showSnackbar('Library games loaded successfully.', 'success');
-        hasFailed = false;
+        hasGamesFailed = false;
       }
     } catch {
       if (isDestroyed || controller.signal.aborted) {
@@ -250,12 +274,74 @@ export function createLibraryPage(): HTMLElement {
         }),
       );
 
-      hasFailed = true;
+      hasGamesFailed = true;
       showSnackbar('Failed to load library games.', 'error');
     } finally {
-      if (request === controller && !isDestroyed) {
+      if (gamesRequest === controller && !isDestroyed) {
         results.setAttribute('aria-busy', 'false');
       }
+    }
+  }
+
+  async function loadCategories(): Promise<void> {
+    if (isDestroyed) {
+      return;
+    }
+
+    categoriesRequest?.abort();
+
+    categoryState.setAttribute('aria-busy', 'true');
+    categoryState.replaceChildren(createSkeleton('Loading categories'));
+
+    const controller = new AbortController();
+    categoriesRequest = controller;
+
+    try {
+      const categories = await getCategories(controller.signal);
+
+      if (isDestroyed || controller.signal.aborted) {
+        return;
+      }
+
+      activeCategory =
+        categories.find((category) => category.isDefault)?.slug ?? categories[0]?.slug ?? 'all';
+
+      if (categories.length === 0) {
+        categoryState.replaceChildren(createEmptyState('No categories available.'));
+      } else {
+        categoryState.replaceChildren(
+          createCategoryFilters(categories, activeCategory, (category): void => {
+            activeCategory = category;
+            void loadGames();
+          }),
+        );
+      }
+
+      if (hasCategoriesFailed) {
+        showSnackbar('Categories loaded successfully.', 'success');
+        hasCategoriesFailed = false;
+      }
+    } catch {
+      if (isDestroyed || controller.signal.aborted) {
+        return;
+      }
+
+      categoryState.replaceChildren(
+        createErrorState('Could not load categories. Please try again.', (): void => {
+          void loadCategories();
+        }),
+      );
+
+      hasCategoriesFailed = true;
+      showSnackbar('Failed to load categories.', 'error');
+    } finally {
+      if (categoriesRequest === controller && !isDestroyed) {
+        categoryState.setAttribute('aria-busy', 'false');
+      }
+    }
+
+    if (!isDestroyed && !controller.signal.aborted) {
+      void loadGames();
     }
   }
 
@@ -263,12 +349,13 @@ export function createLibraryPage(): HTMLElement {
     'page-dispose',
     (): void => {
       isDestroyed = true;
-      request?.abort();
+      gamesRequest?.abort();
+      categoriesRequest?.abort();
     },
     { once: true },
   );
 
-  void loadGames();
+  void loadCategories();
 
   return main;
 }

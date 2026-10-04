@@ -161,8 +161,21 @@ function isGamesMeta(value: unknown): value is GamesMeta {
   );
 }
 
-export async function getGames(signal?: AbortSignal): Promise<GamesResponse> {
-  const response = await getJson('games?limit=6', signal);
+export interface GamesQuery {
+  readonly category?: string;
+  readonly sort?: string;
+  readonly page?: number;
+}
+
+export async function getGames(signal?: AbortSignal, query?: GamesQuery): Promise<GamesResponse> {
+  const parameters = new URLSearchParams({
+    limit: '6',
+    category: query?.category ?? 'all',
+    sort: query?.sort ?? 'rating-desc',
+    page: String(query?.page ?? 1),
+  });
+
+  const response = await getJson(`games?${parameters.toString()}`, signal);
 
   if (
     typeof response !== 'object' ||
@@ -180,4 +193,39 @@ export async function getGames(signal?: AbortSignal): Promise<GamesResponse> {
     data: response.data,
     meta: response.meta,
   };
+}
+
+export interface Category {
+  readonly slug: string;
+  readonly label: string;
+  readonly isDefault: boolean;
+}
+
+function isCategory(value: unknown): value is Category {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'slug' in value &&
+    typeof value.slug === 'string' &&
+    'label' in value &&
+    typeof value.label === 'string' &&
+    'isDefault' in value &&
+    typeof value.isDefault === 'boolean'
+  );
+}
+
+export async function getCategories(signal?: AbortSignal): Promise<readonly Category[]> {
+  const response = await getJson('categories', signal);
+
+  if (
+    typeof response !== 'object' ||
+    response === null ||
+    !('data' in response) ||
+    !Array.isArray(response.data) ||
+    !response.data.every(isCategory)
+  ) {
+    throw new Error('Invalid categories response');
+  }
+
+  return response.data;
 }
