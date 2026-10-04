@@ -56,9 +56,18 @@ export function createHomePage(): HTMLElement {
   main.className = 'home-page';
 
   const slider = createSlider();
+  const leaderboard = createLeaderboard();
 
-  main.append(createHero(), slider.element, createLeaderboard(), createDeveloperCta());
-  main.addEventListener('page-dispose', slider.destroy, { once: true });
+  main.append(createHero(), slider.element, leaderboard.element, createDeveloperCta());
+
+  main.addEventListener(
+    'page-dispose',
+    (): void => {
+      slider.destroy();
+      leaderboard.destroy();
+    },
+    { once: true },
+  );
 
   return main;
 }
