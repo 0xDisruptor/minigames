@@ -211,7 +211,14 @@ export function createLibraryPage(): HTMLElement {
   results.setAttribute('aria-busy', 'true');
   results.replaceChildren(createLoadingGames());
 
-  main.append(createPageHeading(), controls, results, createPagination());
+  let currentPage = 1;
+
+  const pagination = createPagination((page): void => {
+    currentPage = page;
+    void loadGames();
+  });
+
+  main.append(createPageHeading(), controls, results, pagination.element);
 
   let activeCategory = 'all';
   let gamesRequest: AbortController | undefined;
@@ -224,7 +231,7 @@ export function createLibraryPage(): HTMLElement {
     if (isDestroyed) {
       return;
     }
-
+    pagination.setLoading(true);
     gamesRequest?.abort();
 
     results.setAttribute('aria-busy', 'true');
@@ -237,12 +244,16 @@ export function createLibraryPage(): HTMLElement {
       const response = await getGames(controller.signal, {
         category: activeCategory,
         sort: sortControl.value,
-        page: 1,
+        page: currentPage,
       });
 
       if (isDestroyed || controller.signal.aborted) {
         return;
       }
+
+      currentPage = response.data.length === 0 ? 1 : response.meta.page;
+
+      pagination.update(currentPage, response.data.length === 0 ? 1 : response.meta.totalPages);
 
       const games: readonly LibraryGame[] = response.data.map((game) => ({
         id: game.slug,
@@ -281,6 +292,7 @@ export function createLibraryPage(): HTMLElement {
     } finally {
       if (gamesRequest === controller && !isDestroyed) {
         results.setAttribute('aria-busy', 'false');
+        pagination.setLoading(false);
       }
     }
   }
@@ -307,6 +319,7 @@ export function createLibraryPage(): HTMLElement {
 
       activeCategory =
         categories.find((category) => category.isDefault)?.slug ?? categories[0]?.slug ?? 'all';
+      currentPage = 1;
 
       if (categories.length === 0) {
         categoryState.replaceChildren(createEmptyState('No categories available.'));
@@ -314,6 +327,7 @@ export function createLibraryPage(): HTMLElement {
         categoryState.replaceChildren(
           createCategoryFilters(categories, activeCategory, (category): void => {
             activeCategory = category;
+            currentPage = 1;
             void loadGames();
           }),
         );
@@ -351,6 +365,7 @@ export function createLibraryPage(): HTMLElement {
     'page-dispose',
     (): void => {
       isDestroyed = true;
+      pagination.destroy();
       gamesRequest?.abort();
       categoriesRequest?.abort();
     },
@@ -358,6 +373,7 @@ export function createLibraryPage(): HTMLElement {
   );
 
   sortControl.addEventListener('change', (): void => {
+    currentPage = 1;
     void loadGames();
   });
 
