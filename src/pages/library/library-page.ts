@@ -143,6 +143,8 @@ function createSortControl(): HTMLSelectElement {
   const options = [
     { value: 'rating-desc', label: 'Rating ↓' },
     { value: 'rating-asc', label: 'Rating ↑' },
+    { value: 'name-asc', label: 'Name A–Z' },
+    { value: 'name-desc', label: 'Name Z–A' },
   ];
 
   for (const { value, label } of options) {
@@ -270,7 +272,9 @@ export function createLibraryPage(): HTMLElement {
 
       results.replaceChildren(
         createErrorState('Could not load games. Please try again.', (): void => {
-          void loadGames();
+          sortControl.addEventListener('change', (): void => {
+            void loadGames();
+          });
         }),
       );
 
