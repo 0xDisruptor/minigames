@@ -54,3 +54,56 @@ export async function getFeaturedGames(signal?: AbortSignal): Promise<readonly F
 
   return response.data;
 }
+
+export interface LeaderboardPlayer {
+  readonly rank: number;
+  readonly playerName: string;
+  readonly gamesPlayed: number;
+  readonly totalScore: number;
+  readonly streakDays: number;
+  readonly favoriteGameSlug: string;
+  readonly favoriteGameName: string;
+}
+
+function isLeaderboardPlayer(value: unknown): value is LeaderboardPlayer {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'rank' in value &&
+    typeof value.rank === 'number' &&
+    Number.isFinite(value.rank) &&
+    'playerName' in value &&
+    typeof value.playerName === 'string' &&
+    'gamesPlayed' in value &&
+    typeof value.gamesPlayed === 'number' &&
+    Number.isFinite(value.gamesPlayed) &&
+    'totalScore' in value &&
+    typeof value.totalScore === 'number' &&
+    Number.isFinite(value.totalScore) &&
+    'streakDays' in value &&
+    typeof value.streakDays === 'number' &&
+    Number.isFinite(value.streakDays) &&
+    'favoriteGameSlug' in value &&
+    typeof value.favoriteGameSlug === 'string' &&
+    'favoriteGameName' in value &&
+    typeof value.favoriteGameName === 'string'
+  );
+}
+
+export async function getLeaderboardPlayers(
+  signal?: AbortSignal,
+): Promise<readonly LeaderboardPlayer[]> {
+  const response = await getJson('leaderboard', signal);
+
+  if (
+    typeof response !== 'object' ||
+    response === null ||
+    !('data' in response) ||
+    !Array.isArray(response.data) ||
+    !response.data.every(isLeaderboardPlayer)
+  ) {
+    throw new Error('Invalid leaderboard response');
+  }
+
+  return response.data;
+}
