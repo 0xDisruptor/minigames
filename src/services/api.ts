@@ -107,3 +107,77 @@ export async function getLeaderboardPlayers(
 
   return response.data;
 }
+
+export interface GameSummary extends FeaturedGame {
+  readonly category: string;
+  readonly price: string;
+  readonly shortDescription: string;
+}
+
+export interface GamesMeta {
+  readonly page: number;
+  readonly limit: number;
+  readonly totalItems: number;
+  readonly totalPages: number;
+}
+
+export interface GamesResponse {
+  readonly data: readonly GameSummary[];
+  readonly meta: GamesMeta;
+}
+
+function isGameSummary(value: unknown): value is GameSummary {
+  return (
+    isFeaturedGame(value) &&
+    'category' in value &&
+    typeof value.category === 'string' &&
+    'price' in value &&
+    typeof value.price === 'string' &&
+    'shortDescription' in value &&
+    typeof value.shortDescription === 'string'
+  );
+}
+
+function isGamesMeta(value: unknown): value is GamesMeta {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'page' in value &&
+    typeof value.page === 'number' &&
+    Number.isSafeInteger(value.page) &&
+    value.page >= 1 &&
+    'limit' in value &&
+    typeof value.limit === 'number' &&
+    Number.isSafeInteger(value.limit) &&
+    value.limit >= 1 &&
+    'totalItems' in value &&
+    typeof value.totalItems === 'number' &&
+    Number.isSafeInteger(value.totalItems) &&
+    value.totalItems >= 0 &&
+    'totalPages' in value &&
+    typeof value.totalPages === 'number' &&
+    Number.isSafeInteger(value.totalPages) &&
+    value.totalPages >= 0
+  );
+}
+
+export async function getGames(signal?: AbortSignal): Promise<GamesResponse> {
+  const response = await getJson('games?limit=6', signal);
+
+  if (
+    typeof response !== 'object' ||
+    response === null ||
+    !('data' in response) ||
+    !Array.isArray(response.data) ||
+    !response.data.every(isGameSummary) ||
+    !('meta' in response) ||
+    !isGamesMeta(response.meta)
+  ) {
+    throw new Error('Invalid games response');
+  }
+
+  return {
+    data: response.data,
+    meta: response.meta,
+  };
+}
