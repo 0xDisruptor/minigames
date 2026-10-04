@@ -57,8 +57,8 @@ export function createGameCard(game: LibraryGame): HTMLElement {
   heading.append(title, category);
 
   const price = createElement('span', 'game-card__price');
-  price.textContent = game.price === 0 ? 'Free' : `$${game.price.toFixed(2)}`;
-  price.classList.toggle('game-card__price--free', game.price === 0);
+  price.textContent = game.price;
+  price.classList.toggle('game-card__price--free', game.price.toLowerCase() === 'free');
 
   const description = createElement('p', 'game-card__description');
   description.textContent = game.description;
@@ -74,6 +74,7 @@ export function createGameCard(game: LibraryGame): HTMLElement {
   details.type = 'button';
   details.textContent = 'Details';
   details.dataset.action = 'open-game-details';
+  details.dataset.gameId = game.id;
   details.setAttribute('aria-haspopup', 'dialog');
   details.setAttribute('aria-label', `Details about ${game.title}`);
 

@@ -1,6 +1,14 @@
 import './library-page.scss';
 import { createGameCard } from '../../components/game-card/game-card';
-import { libraryGames } from './library-data';
+import type { LibraryGame } from './library-data';
+import { getGames } from '../../services/api';
+import { resolveGameImage } from '../../services/media';
+import {
+  createEmptyState,
+  createErrorState,
+  createSkeleton,
+} from '../../components/feedback/feedback';
+import { showSnackbar } from '../../components/snackbar/snackbar';
 import { createPagination } from '../../components/pagination/pagination';
 
 const categories = ['All Games', 'Puzzle', 'Card', 'Match', 'Farm', 'Strategy', 'Arcade'];
@@ -140,16 +148,32 @@ function createSortControl(): HTMLSelectElement {
   return select;
 }
 
-function createGamesList(): HTMLUListElement {
+function createGamesList(games: readonly LibraryGame[]): HTMLUListElement {
   const list = document.createElement('ul');
   list.className = 'library-page__games';
   list.setAttribute('aria-label', 'Games');
 
-  for (const game of libraryGames) {
+  for (const game of games) {
     const item = document.createElement('li');
     item.className = 'library-page__game';
     item.dataset.gameId = game.id;
     item.append(createGameCard(game));
+
+    list.append(item);
+  }
+
+  return list;
+}
+
+function createLoadingGames(): HTMLUListElement {
+  const list = document.createElement('ul');
+  list.className = 'library-page__games';
+  list.setAttribute('aria-label', 'Loading games');
+
+  for (let index = 0; index < 6; index += 1) {
+    const item = document.createElement('li');
+    item.className = 'library-page__game';
+    item.append(createSkeleton(`Loading game ${index + 1}`));
 
     list.append(item);
   }
@@ -165,7 +189,86 @@ export function createLibraryPage(): HTMLElement {
   controls.className = 'library-page__controls';
   controls.append(createCategoryFilters(), createSortControl());
 
-  main.append(createPageHeading(), controls, createGamesList(), createPagination());
+  const results = document.createElement('div');
+  results.className = 'library-page__results';
+
+  main.append(createPageHeading(), controls, results, createPagination());
+
+  let request: AbortController | undefined;
+  let isDestroyed = false;
+  let hasFailed = false;
+
+  async function loadGames(): Promise<void> {
+    if (isDestroyed) {
+      return;
+    }
+
+    request?.abort();
+
+    results.setAttribute('aria-busy', 'true');
+    results.replaceChildren(createLoadingGames());
+
+    const controller = new AbortController();
+    request = controller;
+
+    try {
+      const response = await getGames(controller.signal);
+
+      if (isDestroyed || controller.signal.aborted) {
+        return;
+      }
+
+      const games: readonly LibraryGame[] = response.data.map((game) => ({
+        id: game.slug,
+        title: game.name,
+        category: game.category.charAt(0).toUpperCase() + game.category.slice(1),
+        description: game.shortDescription,
+        image: resolveGameImage(game.cardImage),
+        rating: game.rating,
+        likes: game.likesCount,
+        price: game.price,
+      }));
+
+      if (games.length === 0) {
+        results.replaceChildren(createEmptyState('Data Not Found'));
+      } else {
+        results.replaceChildren(createGamesList(games));
+      }
+
+      if (hasFailed) {
+        showSnackbar('Library games loaded successfully.', 'success');
+        hasFailed = false;
+      }
+    } catch {
+      if (isDestroyed || controller.signal.aborted) {
+        return;
+      }
+
+      results.replaceChildren(
+        createErrorState('Could not load games. Please try again.', (): void => {
+          void loadGames();
+        }),
+      );
+
+      hasFailed = true;
+      showSnackbar('Failed to load library games.', 'error');
+    } finally {
+      if (request === controller && !isDestroyed) {
+        results.setAttribute('aria-busy', 'false');
+      }
+    }
+  }
+
+  main.addEventListener(
+    'page-dispose',
+    (): void => {
+      isDestroyed = true;
+      request?.abort();
+    },
+    { once: true },
+  );
+
+  void loadGames();
 
   return main;
 }
