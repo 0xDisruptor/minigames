@@ -1,0 +1,83 @@
+@use '../../styles/tokens' as tokens;
+@use '../../styles/mixins' as mixins;
+
+.not-found-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: tokens.$size-2;
+  min-height: 60vh;
+  padding: tokens.$size-8 tokens.$size-3;
+  color: tokens.$on-primary;
+  font-family: tokens.$inter;
+  text-align: center;
+
+  &__code {
+    margin: 0;
+    color: tokens.$tertiary;
+    font-size: calc(tokens.$display-large * 2);
+    font-weight: tokens.$bold;
+    line-height: 1;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: tokens.$display-medium;
+    font-weight: tokens.$bold;
+    line-height: 1.2;
+  }
+
+  &__description {
+    margin: 0;
+    color: tokens.$on-bg;
+    font-size: tokens.$body-large;
+    line-height: 1.5;
+  }
+
+  &__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
+    margin-top: tokens.$size-2;
+    padding: tokens.$size-2 tokens.$size-3;
+    border: tokens.$border-width solid tokens.$on-primary;
+    border-radius: tokens.$corner-small;
+    background-color: tokens.$primary;
+    color: tokens.$on-primary;
+    font-size: tokens.$body-large;
+    font-weight: tokens.$bold;
+    text-decoration: none;
+
+    &:hover {
+      background-color: tokens.$primary-high;
+    }
+
+    &:active {
+      background-color: tokens.$primary-low;
+    }
+
+    &:focus-visible {
+      outline: tokens.$border-width solid tokens.$tertiary;
+      outline-offset: tokens.$size-05;
+    }
+  }
+
+  @include mixins.mobile-down {
+    padding-inline: tokens.$size-2;
+
+    &__code {
+      font-size: calc(tokens.$display-small * 2);
+    }
+
+    &__title {
+      font-size: tokens.$display-small;
+    }
+
+    &__description,
+    &__button {
+      font-size: tokens.$body-small;
+    }
+  }
+}
