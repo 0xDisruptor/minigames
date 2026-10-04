@@ -20,6 +20,10 @@ export function showSnackbar(message: string, variant: SnackbarVariant): void {
     document.body.append(state.container);
   }
 
+  const host = document.querySelector<HTMLDialogElement>('dialog[open]') ?? document.body;
+
+  host.append(state.container);
+
   dismissSnackbar();
 
   const notification = document.createElement('div');

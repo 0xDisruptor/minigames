@@ -1,12 +1,22 @@
 export const API_BASE_URL = 'https://faxb76kxra.execute-api.eu-central-1.amazonaws.com/api/';
 
+export class ApiError extends Error {
+  readonly status: number;
+
+  constructor(status: number) {
+    super(`Request failed with status ${status}`);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
 export async function getJson(path: string, signal?: AbortSignal): Promise<unknown> {
   const url = new URL(path, API_BASE_URL);
 
   const response = await fetch(url, { signal });
 
   if (!response.ok) {
-    throw new Error(`Request failed with status ${response.status}`);
+    throw new ApiError(response.status);
   }
 
   return response.json();
@@ -225,6 +235,117 @@ export async function getCategories(signal?: AbortSignal): Promise<readonly Cate
     !response.data.every(isCategory)
   ) {
     throw new Error('Invalid categories response');
+  }
+
+  return response.data;
+}
+
+export interface GameSpecs {
+  readonly genre: string;
+  readonly players: string;
+  readonly duration: string;
+  readonly price: string;
+}
+
+export interface GameRecord {
+  readonly position: number;
+  readonly playerName: string;
+  readonly score: number;
+  readonly achievedAt: string;
+}
+
+export interface GameDetails {
+  readonly slug: string;
+  readonly name: string;
+  readonly heroImage: string;
+  readonly rating: number;
+  readonly likesCount: number;
+  readonly isLikedByCurrentUser: boolean;
+  readonly fullDescription: string;
+  readonly specs: GameSpecs;
+  readonly topRecords: readonly GameRecord[];
+}
+
+function isGameSpecs(value: unknown): value is GameSpecs {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'genre' in value &&
+    typeof value.genre === 'string' &&
+    'players' in value &&
+    typeof value.players === 'string' &&
+    'duration' in value &&
+    typeof value.duration === 'string' &&
+    'price' in value &&
+    typeof value.price === 'string'
+  );
+}
+
+function isGameRecord(value: unknown): value is GameRecord {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'position' in value &&
+    typeof value.position === 'number' &&
+    Number.isSafeInteger(value.position) &&
+    value.position >= 1 &&
+    'playerName' in value &&
+    typeof value.playerName === 'string' &&
+    'score' in value &&
+    typeof value.score === 'number' &&
+    Number.isSafeInteger(value.score) &&
+    value.score >= 0 &&
+    'achievedAt' in value &&
+    typeof value.achievedAt === 'string' &&
+    Number.isFinite(Date.parse(value.achievedAt))
+  );
+}
+
+function isGameDetails(value: unknown): value is GameDetails {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'slug' in value &&
+    typeof value.slug === 'string' &&
+    'name' in value &&
+    typeof value.name === 'string' &&
+    'heroImage' in value &&
+    typeof value.heroImage === 'string' &&
+    'rating' in value &&
+    typeof value.rating === 'number' &&
+    Number.isFinite(value.rating) &&
+    'likesCount' in value &&
+    typeof value.likesCount === 'number' &&
+    Number.isSafeInteger(value.likesCount) &&
+    value.likesCount >= 0 &&
+    'isLikedByCurrentUser' in value &&
+    typeof value.isLikedByCurrentUser === 'boolean' &&
+    'fullDescription' in value &&
+    typeof value.fullDescription === 'string' &&
+    'specs' in value &&
+    isGameSpecs(value.specs) &&
+    'topRecords' in value &&
+    Array.isArray(value.topRecords) &&
+    value.topRecords.every(isGameRecord)
+  );
+}
+
+export async function getGameDetails(
+  gameSlug: string,
+  signal?: AbortSignal,
+): Promise<GameDetails | undefined> {
+  const response = await getJson(`games/${encodeURIComponent(gameSlug)}`, signal);
+
+  if (typeof response !== 'object' || response === null || !('data' in response)) {
+    throw new Error('Invalid game details response');
+  }
+
+  if (response.data === undefined) {
+    return undefined;
+  }
+
+  if (!isGameDetails(response.data)) {
+    throw new Error('Invalid game details response');
   }
 
   return response.data;

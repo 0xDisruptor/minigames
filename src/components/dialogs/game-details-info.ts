@@ -1,5 +1,6 @@
 import starUrl from '../../assets/icons/star.svg';
 import heartUrl from '../../assets/icons/heart.svg';
+import type { GameDetails } from '../../services/api';
 
 function createMetric(iconUrl: string, text: string, label: string): HTMLSpanElement {
   const metric = document.createElement('span');
@@ -16,11 +17,10 @@ function createMetric(iconUrl: string, text: string, label: string): HTMLSpanEle
   value.textContent = text;
 
   metric.append(icon, value);
-
   return metric;
 }
 
-export function createGameDetailsInfo() {
+export function createGameDetailsInfo(game: GameDetails): HTMLElement {
   const element = document.createElement('div');
   element.className = 'game-dialog__info';
 
@@ -30,45 +30,46 @@ export function createGameDetailsInfo() {
   const title = document.createElement('h2');
   title.id = 'game-dialog-title';
   title.className = 'game-dialog__title';
-  title.textContent = 'Tukoni: Forest Keepers';
+  title.textContent = game.name;
 
   const metrics = document.createElement('div');
   metrics.className = 'game-dialog__metrics';
+
+  const likes = new Intl.NumberFormat('en', {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(game.likesCount);
+
   metrics.append(
-    createMetric(starUrl, '4.9', 'Rating: 4.9 out of 5'),
-    createMetric(heartUrl, '31.2K', '31200 likes'),
+    createMetric(starUrl, game.rating.toFixed(1), `Rating: ${game.rating} out of 5`),
+    createMetric(heartUrl, likes, `${game.likesCount} likes`),
   );
 
   heading.append(title, metrics);
 
   const description = document.createElement('p');
   description.className = 'game-dialog__description';
-  description.textContent =
-    'Tukoni: Forest Keepers — a cozy hand-drawn puzzle-adventure. ' +
-    'You are Traveller, a little forest spirit on an important mission. ' +
-    'Wander storybook meadows, visit mushroom villages, meet adorable ' +
-    'inhabitants, solve gentle hand-crafted puzzles, brew herbal teas ' +
-    'and help the Tukoni forest prepare peacefully for the coming winter.';
+  description.textContent = game.fullDescription || 'No description available.';
 
   const characteristics = document.createElement('dl');
   characteristics.className = 'game-dialog__characteristics';
 
   const entries = [
-    ['Genre', 'Puzzle'],
-    ['Players', 'Solo'],
-    ['Duration', '40–90 min'],
-    ['Price', 'Free'],
-  ];
+    ['Genre', game.specs.genre],
+    ['Players', game.specs.players],
+    ['Duration', game.specs.duration],
+    ['Price', game.specs.price],
+  ] as const;
 
   for (const [label, value] of entries) {
     const item = document.createElement('div');
     item.className = 'game-dialog__characteristic';
 
     const term = document.createElement('dt');
-    term.textContent = label ?? '';
+    term.textContent = label;
 
     const detail = document.createElement('dd');
-    detail.textContent = value ?? '';
+    detail.textContent = value;
 
     item.append(term, detail);
     characteristics.append(item);
@@ -85,34 +86,25 @@ export function createGameDetailsInfo() {
   const favoriteButton = document.createElement('button');
   favoriteButton.type = 'button';
   favoriteButton.className = 'game-dialog__action game-dialog__action--favorite';
-  favoriteButton.setAttribute('aria-label', 'Add to Favorites');
-  favoriteButton.setAttribute('aria-pressed', 'false');
+  favoriteButton.disabled = true;
+  favoriteButton.setAttribute('aria-pressed', String(game.isLikedByCurrentUser));
+
+  const favoriteLabel = game.isLikedByCurrentUser ? 'In Favorites' : 'Add to Favorites';
+
+  favoriteButton.setAttribute('aria-label', favoriteLabel);
 
   const favoriteIcon = document.createElement('span');
   favoriteIcon.className = 'game-dialog__favorite-icon';
-  favoriteIcon.textContent = '♡';
+  favoriteIcon.textContent = game.isLikedByCurrentUser ? '♥' : '♡';
   favoriteIcon.setAttribute('aria-hidden', 'true');
 
   const favoriteText = document.createElement('span');
   favoriteText.className = 'game-dialog__favorite-text';
-  favoriteText.textContent = 'Add to Favorites';
+  favoriteText.textContent = favoriteLabel;
 
   favoriteButton.append(favoriteIcon, favoriteText);
-
-  favoriteButton.addEventListener('click', (): void => {
-    const isFavorite = favoriteButton.getAttribute('aria-pressed') === 'true';
-
-    favoriteButton.setAttribute('aria-pressed', String(!isFavorite));
-    favoriteIcon.textContent = isFavorite ? '♡' : '♥';
-  });
-
-  function reset(): void {
-    favoriteButton.setAttribute('aria-pressed', 'false');
-    favoriteIcon.textContent = '♡';
-  }
-
   actions.append(playButton, favoriteButton);
   element.append(heading, description, characteristics, actions);
 
-  return { element, reset };
+  return element;
 }
