@@ -3,8 +3,15 @@ import { createLibraryPage } from '../pages/library/library-page';
 import type { createAuthDialog } from '../components/dialogs/auth-dialog';
 import type { createGameDetailsDialog } from '../components/dialogs/game-details-dialog';
 import { NAVIGATION_EVENT, getRoutePath, navigate, readLibraryUrlState } from './navigation';
+import { createNotFoundPage } from '../pages/not-found/not-found-page';
 
-type Page = 'home' | 'library';
+type Page = 'home' | 'library' | 'not-found';
+
+const pageTitles: Readonly<Record<Page, string>> = {
+  home: 'MiniGames',
+  library: 'Library | MiniGames',
+  'not-found': '404 | MiniGames',
+};
 
 interface RouterDialogs {
   readonly auth: ReturnType<typeof createAuthDialog>;
@@ -13,7 +20,21 @@ interface RouterDialogs {
 }
 
 function getCurrentPage(): Page {
-  return getRoutePath() === '/library' ? 'library' : 'home';
+  const path = getRoutePath();
+
+  if (path === '/library') {
+    return 'library';
+  }
+
+  return path === '/' || path === '/home' ? 'home' : 'not-found';
+}
+
+function createPage(page: Page): HTMLElement {
+  if (page === 'home') {
+    return createHomePage();
+  }
+
+  return page === 'library' ? createLibraryPage() : createNotFoundPage();
 }
 
 function updateNavigation(root: HTMLElement, page: Page): void {
@@ -45,7 +66,7 @@ export function initRouter(root: HTMLElement, outlet: HTMLElement, dialogs: Rout
 
     outlet.firstElementChild?.dispatchEvent(new Event('page-dispose'));
 
-    const content = page === 'library' ? createLibraryPage() : createHomePage();
+    const content = createPage(page);
 
     outlet.replaceChildren(content);
     updateNavigation(root, page);
@@ -53,7 +74,7 @@ export function initRouter(root: HTMLElement, outlet: HTMLElement, dialogs: Rout
     renderedPage = page;
     renderedKey = key;
 
-    document.title = page === 'library' ? 'Library | MiniGames' : 'MiniGames';
+    document.title = pageTitles[page];
 
     if (shouldScroll) {
       scrollTo({ top: 0, behavior: 'instant' });
@@ -65,6 +86,11 @@ export function initRouter(root: HTMLElement, outlet: HTMLElement, dialogs: Rout
     const authMode = parameters.get('auth');
     const gameSlug = parameters.get('game');
     const trigger = dialogs.takeTrigger();
+    if (getCurrentPage() === 'not-found') {
+      dialogs.auth.close();
+      dialogs.game.close();
+      return;
+    }
 
     if (authMode === 'login' || authMode === 'register') {
       dialogs.game.close();
