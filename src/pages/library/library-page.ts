@@ -272,9 +272,7 @@ export function createLibraryPage(): HTMLElement {
 
       results.replaceChildren(
         createErrorState('Could not load games. Please try again.', (): void => {
-          sortControl.addEventListener('change', (): void => {
-            void loadGames();
-          });
+          void loadGames();
         }),
       );
 
@@ -358,6 +356,10 @@ export function createLibraryPage(): HTMLElement {
     },
     { once: true },
   );
+
+  sortControl.addEventListener('change', (): void => {
+    void loadGames();
+  });
 
   void loadCategories();
 
