@@ -306,3 +306,20 @@
     display: none;
   }
 }
+
+.slider__content {
+  height: tokens.$slider-height-desktop;
+
+  @include mixins.tablet-down {
+    height: tokens.$slider-height-tablet;
+  }
+
+  @include mixins.mobile-down {
+    height: tokens.$slider-height-mobile;
+  }
+}
+
+.slider__arrow:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

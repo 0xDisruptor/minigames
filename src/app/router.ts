@@ -22,6 +22,7 @@ export function initRouter(root: HTMLElement, outlet: HTMLElement): void {
     const page = getCurrentPage();
     const content = page === 'library' ? createLibraryPage() : createHomePage();
 
+    outlet.firstElementChild?.dispatchEvent(new Event('page-dispose'));
     outlet.replaceChildren(content);
     updateNavigation(root, page);
 

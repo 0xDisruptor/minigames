@@ -54,7 +54,11 @@ function createHero(): HTMLElement {
 export function createHomePage(): HTMLElement {
   const main: HTMLElement = document.createElement('main');
   main.className = 'home-page';
-  main.append(createHero(), createSlider(), createLeaderboard(), createDeveloperCta());
+
+  const slider = createSlider();
+
+  main.append(createHero(), slider.element, createLeaderboard(), createDeveloperCta());
+  main.addEventListener('page-dispose', slider.destroy, { once: true });
 
   return main;
 }
