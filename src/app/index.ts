@@ -6,26 +6,44 @@ import '../styles/globals.scss';
 import { createHeader } from '../components/header/header';
 import { createFooter } from '../components/footer/footer';
 import { createAuthDialog } from '../components/dialogs/auth-dialog';
-import { initRouter } from './router';
 import { createGameDetailsDialog } from '../components/dialogs/game-details-dialog';
+import { updateUrlQuery } from './navigation';
+import { initRouter } from './router';
 
-const app: HTMLDivElement = document.createElement('div');
+const app = document.createElement('div');
 app.id = 'app';
 
-const outlet: HTMLDivElement = document.createElement('div');
+const outlet = document.createElement('div');
 outlet.id = 'page-content';
 
-const authDialog = createAuthDialog();
+const dialogContext: { trigger?: HTMLElement } = {};
 
-const gameDetailsDialog = createGameDetailsDialog();
-
-app.append(
-  createHeader(authDialog.open),
-  outlet,
-  createFooter(),
-  authDialog.element,
-  gameDetailsDialog.element,
+const authDialog = createAuthDialog(
+  (mode): void => {
+    updateUrlQuery({
+      auth: mode,
+      game: undefined,
+    });
+  },
+  (): void => {
+    updateUrlQuery({ auth: undefined });
+  },
 );
+
+const gameDetailsDialog = createGameDetailsDialog((): void => {
+  updateUrlQuery({ game: undefined });
+});
+
+const header = createHeader((mode, trigger): void => {
+  dialogContext.trigger = trigger;
+
+  updateUrlQuery({
+    auth: mode,
+    game: undefined,
+  });
+});
+
+app.append(header, outlet, createFooter(), authDialog.element, gameDetailsDialog.element);
 
 app.addEventListener('click', (event: MouseEvent): void => {
   if (!(event.target instanceof Element)) {
@@ -40,9 +58,29 @@ app.addEventListener('click', (event: MouseEvent): void => {
     return;
   }
 
-  gameDetailsDialog.open(trigger);
+  const slug = trigger.dataset.gameId;
+
+  if (!slug) {
+    return;
+  }
+
+  dialogContext.trigger = trigger;
+
+  updateUrlQuery({
+    game: slug,
+    auth: undefined,
+  });
 });
 
 document.body.append(app);
 
-initRouter(app, outlet);
+initRouter(app, outlet, {
+  auth: authDialog,
+  game: gameDetailsDialog,
+
+  takeTrigger(): HTMLElement | undefined {
+    const trigger = dialogContext.trigger;
+    dialogContext.trigger = undefined;
+    return trigger;
+  },
+});

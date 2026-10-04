@@ -9,7 +9,7 @@ import { createGameDetailsInfo } from './game-details-info';
 import { createGameDetailsRecords } from './game-details-records';
 import { createGameDetailsComments } from './game-details-comment';
 
-export function createGameDetailsDialog() {
+export function createGameDetailsDialog(onRequestClose?: () => void) {
   const dialog = document.createElement('dialog');
   dialog.className = 'game-dialog';
   dialog.setAttribute('aria-labelledby', 'game-dialog-title');
@@ -151,29 +151,47 @@ export function createGameDetailsDialog() {
     dialog.close();
   }
 
-  function open(trigger: HTMLElement): void {
-    const slug = trigger.dataset.gameId;
-
-    if (!slug || dialog.open) {
+  function requestClose(): void {
+    if (onRequestClose) {
+      onRequestClose();
       return;
     }
 
-    opener = trigger;
+    close();
+  }
+
+  function openBySlug(slug: string, trigger?: HTMLElement): void {
+    if (!slug || (currentSlug === slug && dialog.open)) {
+      return;
+    }
+
+    opener = trigger ?? (dialog.open ? opener : undefined);
     currentSlug = slug;
     hasFailed = false;
 
     dismissSnackbar();
-    dialog.showModal();
-    dialog.scrollTop = 0;
 
+    if (!dialog.open) {
+      dialog.showModal();
+    }
+
+    dialog.scrollTop = 0;
     void loadGame();
   }
 
-  closeButton.addEventListener('click', close);
+  function open(trigger: HTMLElement): void {
+    const slug = trigger.dataset.gameId;
+
+    if (slug) {
+      openBySlug(slug, trigger);
+    }
+  }
+
+  closeButton.addEventListener('click', requestClose);
 
   dialog.addEventListener('cancel', (event: Event): void => {
     event.preventDefault();
-    close();
+    requestClose();
   });
 
   function isOutside(event: MouseEvent): boolean {
@@ -200,6 +218,9 @@ export function createGameDetailsDialog() {
   });
 
   dialog.addEventListener('close', (): void => {
+    if (dialog.open) {
+      return;
+    }
     request?.abort();
     comments.reset();
     request = undefined;
@@ -213,5 +234,5 @@ export function createGameDetailsDialog() {
     opener = undefined;
   });
 
-  return { element: dialog, open, close };
+  return { element: dialog, open, openBySlug, close };
 }

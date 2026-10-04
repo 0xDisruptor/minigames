@@ -11,6 +11,7 @@ import {
 } from '../../components/feedback/feedback';
 import { showSnackbar } from '../../components/snackbar/snackbar';
 import { createPagination } from '../../components/pagination/pagination';
+import { readLibraryUrlState, updateUrlQuery } from '../../app/navigation';
 
 function createPageHeading(): HTMLElement {
   const header = document.createElement('header');
@@ -197,6 +198,10 @@ export function createLibraryPage(): HTMLElement {
   const main = document.createElement('main');
   main.className = 'library-page';
 
+  const urlState = readLibraryUrlState();
+
+  const hasCategoryInUrl = new URLSearchParams(location.search).has('category');
+
   const controls = document.createElement('div');
   controls.className = 'library-page__controls';
 
@@ -204,6 +209,8 @@ export function createLibraryPage(): HTMLElement {
   categoryState.className = 'library-page__category-state';
 
   const sortControl = createSortControl();
+
+  sortControl.value = urlState.sort;
   controls.append(categoryState, sortControl);
 
   const results = document.createElement('div');
@@ -211,16 +218,15 @@ export function createLibraryPage(): HTMLElement {
   results.setAttribute('aria-busy', 'true');
   results.replaceChildren(createLoadingGames());
 
-  let currentPage = 1;
+  let currentPage = urlState.page;
 
   const pagination = createPagination((page): void => {
-    currentPage = page;
-    void loadGames();
+    updateUrlQuery({ page: String(page) });
   });
 
   main.append(createPageHeading(), controls, results, pagination.element);
 
-  let activeCategory = 'all';
+  const activeCategory = urlState.category;
   let gamesRequest: AbortController | undefined;
   let categoriesRequest: AbortController | undefined;
   let isDestroyed = false;
@@ -317,18 +323,23 @@ export function createLibraryPage(): HTMLElement {
         return;
       }
 
-      activeCategory =
+      const defaultCategory =
         categories.find((category) => category.isDefault)?.slug ?? categories[0]?.slug ?? 'all';
-      currentPage = 1;
+
+      if (!hasCategoryInUrl && defaultCategory !== activeCategory) {
+        updateUrlQuery({ category: defaultCategory }, true);
+        return;
+      }
 
       if (categories.length === 0) {
         categoryState.replaceChildren(createEmptyState('No categories available.'));
       } else {
         categoryState.replaceChildren(
           createCategoryFilters(categories, activeCategory, (category): void => {
-            activeCategory = category;
-            currentPage = 1;
-            void loadGames();
+            updateUrlQuery({
+              category,
+              page: '1',
+            });
           }),
         );
       }
@@ -373,8 +384,10 @@ export function createLibraryPage(): HTMLElement {
   );
 
   sortControl.addEventListener('change', (): void => {
-    currentPage = 1;
-    void loadGames();
+    updateUrlQuery({
+      sort: sortControl.value,
+      page: '1',
+    });
   });
 
   void loadCategories();
