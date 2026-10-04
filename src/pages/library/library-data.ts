@@ -8,4 +8,3 @@ export interface LibraryGame {
   readonly likes: number;
   readonly price: string;
 }
-
