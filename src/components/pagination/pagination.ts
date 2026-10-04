@@ -1,8 +1,18 @@
 import './pagination.scss';
 
-export function createPagination(): HTMLElement {
-  const totalPages = 4;
+export interface PaginationController {
+  readonly element: HTMLElement;
+  update: (page: number, totalPages: number) => void;
+  setLoading: (isLoading: boolean) => void;
+  destroy: () => void;
+}
+
+export function createPagination(onPageChange: (page: number) => void): PaginationController {
   let currentPage = 1;
+  let totalPages = 1;
+  let isLoading = false;
+
+  const mobileQuery = matchMedia('(max-width: 600px)');
 
   const navigation = document.createElement('nav');
   navigation.className = 'pagination';
@@ -19,7 +29,6 @@ export function createPagination(): HTMLElement {
     icon.setAttribute('aria-hidden', 'true');
 
     button.append(icon);
-
     return button;
   }
 
@@ -29,58 +38,80 @@ export function createPagination(): HTMLElement {
   const numbers = document.createElement('div');
   numbers.className = 'pagination__numbers';
 
-  const pageButtons: HTMLButtonElement[] = [];
-
-  function updatePagination(): void {
-    previous.disabled = currentPage === 1;
-    next.disabled = currentPage === totalPages;
-
-    navigation.classList.toggle('pagination--last-page', currentPage === totalPages);
-
-    for (const button of pageButtons) {
-      const isCurrent = Number(button.dataset.page) === currentPage;
-
-      button.setAttribute('aria-current', isCurrent ? 'page' : 'false');
+  function changePage(page: number): void {
+    if (isLoading || page === currentPage || page < 1 || page > totalPages) {
+      return;
     }
+
+    onPageChange(page);
   }
 
-  for (let page = 1; page <= totalPages; page += 1) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'pagination__button';
-    button.textContent = String(page);
-    button.dataset.page = String(page);
-    button.setAttribute('aria-label', `Page ${page}`);
+  function render(): void {
+    previous.disabled = isLoading || currentPage === 1;
+    next.disabled = isLoading || currentPage === totalPages;
+    navigation.setAttribute('aria-busy', String(isLoading));
 
-    button.addEventListener('click', (): void => {
-      currentPage = page;
-      updatePagination();
-    });
+    const visibleLimit = mobileQuery.matches ? 3 : 4;
+    const visibleCount = Math.min(visibleLimit, totalPages);
+    const firstPage = Math.max(
+      1,
+      Math.min(currentPage - Math.floor((visibleCount - 1) / 2), totalPages - visibleCount + 1),
+    );
 
-    pageButtons.push(button);
-    numbers.append(button);
+    numbers.replaceChildren();
+
+    for (let offset = 0; offset < visibleCount; offset += 1) {
+      const page = firstPage + offset;
+
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'pagination__button';
+      button.textContent = String(page);
+      button.dataset.page = String(page);
+      button.disabled = isLoading;
+      button.setAttribute('aria-label', `Page ${page}`);
+
+      if (page === currentPage) {
+        button.setAttribute('aria-current', 'page');
+      }
+
+      button.addEventListener('click', (): void => {
+        changePage(page);
+      });
+
+      numbers.append(button);
+    }
   }
 
   previous.addEventListener('click', (): void => {
-    if (currentPage === 1) {
-      return;
-    }
-
-    currentPage -= 1;
-    updatePagination();
+    changePage(currentPage - 1);
   });
 
   next.addEventListener('click', (): void => {
-    if (currentPage === totalPages) {
-      return;
-    }
-
-    currentPage += 1;
-    updatePagination();
+    changePage(currentPage + 1);
   });
 
-  navigation.append(previous, numbers, next);
-  updatePagination();
+  mobileQuery.addEventListener('change', render);
 
-  return navigation;
+  navigation.append(previous, numbers, next);
+  render();
+
+  return {
+    element: navigation,
+
+    update(page: number, pages: number): void {
+      totalPages = Math.max(1, pages);
+      currentPage = Math.min(Math.max(1, page), totalPages);
+      render();
+    },
+
+    setLoading(isBusy: boolean): void {
+      isLoading = isBusy;
+      render();
+    },
+
+    destroy(): void {
+      mobileQuery.removeEventListener('change', render);
+    },
+  };
 }

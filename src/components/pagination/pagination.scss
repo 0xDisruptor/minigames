@@ -72,17 +72,5 @@
     &__numbers {
       gap: tokens.$size-1;
     }
-
-    &:not(.pagination--last-page) {
-      .pagination__numbers > :last-child {
-        display: none;
-      }
-    }
-
-    &--last-page {
-      .pagination__numbers > :first-child {
-        display: none;
-      }
-    }
   }
 }
