@@ -120,9 +120,14 @@ export function createAuthDialog(
     },
   );
 
-  const registerForm = createRegisterForm((): void => {
-    requestMode('login');
-  });
+  const registerForm = createRegisterForm(
+    (): void => {
+      requestMode('login');
+    },
+    {
+      onPendingChange: setPending,
+    },
+  );
 
   panels.login.append(loginForm);
   panels.register.append(registerForm);
