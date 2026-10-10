@@ -1,5 +1,7 @@
 import './auth-form.scss';
 import { createAuthField } from './register-form';
+import { bindAuthFormValidation } from './auth-form-validation';
+import { validateEmail, validateLoginPassword } from '../../utils/auth-validation';
 
 import emailIconUrl from '../../assets/icons/auth-email.svg';
 import lockIconUrl from '../../assets/icons/auth-lock.svg';
@@ -137,6 +139,17 @@ export function createLoginForm(onRegister: () => void): HTMLFormElement {
   form.addEventListener('submit', (event: SubmitEvent): void => {
     event.preventDefault();
   });
+
+  bindAuthFormValidation(form, [
+    {
+      id: 'login-email',
+      validate: validateEmail,
+    },
+    {
+      id: 'login-password',
+      validate: validateLoginPassword,
+    },
+  ]);
 
   return form;
 }

@@ -1,4 +1,11 @@
 import './auth-form.scss';
+import { bindAuthFormValidation } from './auth-form-validation';
+import {
+  validateConfirmPassword,
+  validateEmail,
+  validateRegisterPassword,
+  validateUsername,
+} from '../../utils/auth-validation';
 
 import userIconUrl from '../../assets/icons/auth-user.svg';
 import emailIconUrl from '../../assets/icons/auth-email.svg';
@@ -40,6 +47,16 @@ export function createAuthField(options: AuthFieldOptions): HTMLDivElement {
   input.type = options.type;
   input.placeholder = options.placeholder;
   input.setAttribute('autocomplete', options.autocomplete);
+  input.required = true;
+  input.setAttribute('aria-invalid', 'false');
+
+  const error: HTMLParagraphElement = document.createElement('p');
+  error.id = `${options.id}-error`;
+  error.className = 'auth-form__error';
+  error.setAttribute('aria-live', 'polite');
+  error.hidden = true;
+
+  input.setAttribute('aria-describedby', error.id);
 
   if (options.type === 'email') {
     input.inputMode = 'email';
@@ -48,7 +65,7 @@ export function createAuthField(options: AuthFieldOptions): HTMLDivElement {
   }
 
   control.append(icon, input);
-  field.append(label, control);
+  field.append(label, control, error);
 
   return field;
 }
@@ -81,7 +98,7 @@ export function createRegisterForm(onLogin: () => void): HTMLFormElement {
       id: 'register-username',
       label: 'Username',
       type: 'text',
-      placeholder: 'e.g. CozyGamer_99',
+      placeholder: 'e.g. CozyGamer99',
       autocomplete: 'username',
       iconUrl: userIconUrl,
     },
@@ -97,7 +114,7 @@ export function createRegisterForm(onLogin: () => void): HTMLFormElement {
       id: 'register-password',
       label: 'Password',
       type: 'password',
-      placeholder: 'Min. 8 characters',
+      placeholder: 'Min. 6 characters',
       autocomplete: 'new-password',
       iconUrl: lockIconUrl,
     },
@@ -158,6 +175,33 @@ export function createRegisterForm(onLogin: () => void): HTMLFormElement {
   form.addEventListener('submit', (event: SubmitEvent): void => {
     event.preventDefault();
   });
+
+  const passwordElement = form.querySelector<HTMLInputElement>('#register-password');
+
+  if (!passwordElement) {
+    throw new Error('Registration password input is missing.');
+  }
+
+  const passwordInput: HTMLInputElement = passwordElement;
+
+  bindAuthFormValidation(form, [
+    {
+      id: 'register-username',
+      validate: validateUsername,
+    },
+    {
+      id: 'register-email',
+      validate: validateEmail,
+    },
+    {
+      id: 'register-password',
+      validate: validateRegisterPassword,
+    },
+    {
+      id: 'register-confirm-password',
+      validate: (value: string) => validateConfirmPassword(value, passwordInput.value),
+    },
+  ]);
 
   return form;
 }
