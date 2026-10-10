@@ -1,4 +1,11 @@
 import './auth-form.scss';
+import { bindAuthFormValidation } from './auth-form-validation';
+import {
+  validateConfirmPassword,
+  validateEmail,
+  validateRegisterPassword,
+  validateUsername,
+} from '../../utils/auth-validation';
 
 import userIconUrl from '../../assets/icons/auth-user.svg';
 import emailIconUrl from '../../assets/icons/auth-email.svg';
@@ -168,6 +175,33 @@ export function createRegisterForm(onLogin: () => void): HTMLFormElement {
   form.addEventListener('submit', (event: SubmitEvent): void => {
     event.preventDefault();
   });
+
+  const passwordElement = form.querySelector<HTMLInputElement>('#register-password');
+
+  if (!passwordElement) {
+    throw new Error('Registration password input is missing.');
+  }
+
+  const passwordInput: HTMLInputElement = passwordElement;
+
+  bindAuthFormValidation(form, [
+    {
+      id: 'register-username',
+      validate: validateUsername,
+    },
+    {
+      id: 'register-email',
+      validate: validateEmail,
+    },
+    {
+      id: 'register-password',
+      validate: validateRegisterPassword,
+    },
+    {
+      id: 'register-confirm-password',
+      validate: (value: string) => validateConfirmPassword(value, passwordInput.value),
+    },
+  ]);
 
   return form;
 }

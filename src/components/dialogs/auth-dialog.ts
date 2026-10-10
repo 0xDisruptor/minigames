@@ -49,8 +49,13 @@ export function createAuthDialog(
 
   function selectMode(mode: AuthMode, shouldFocusTab: boolean): void {
     const hasChanged = mode !== activeMode;
-    activeMode = mode;
 
+    if (hasChanged) {
+      loginForm.reset();
+      registerForm.reset();
+    }
+
+    activeMode = mode;
     for (const current of modes) {
       const isSelected = current === mode;
       tabs[current].setAttribute('aria-selected', String(isSelected));
