@@ -44,7 +44,7 @@ export function bindAuthFormValidation(
       isValid = message === undefined && isValid;
     }
 
-    submit.disabled = !isValid;
+    submit.disabled = form.getAttribute('aria-busy') === 'true' || !isValid;
 
     return isValid;
   }
@@ -59,6 +59,11 @@ export function bindAuthFormValidation(
   }
 
   form.addEventListener('submit', (event: SubmitEvent): void => {
+    if (form.getAttribute('aria-busy') === 'true') {
+      event.preventDefault();
+      return;
+    }
+
     for (const field of fields) {
       touched.add(field.input);
     }
