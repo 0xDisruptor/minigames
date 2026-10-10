@@ -11,6 +11,7 @@ import { registerWithEmail } from '../../services/auth';
 import { getAuthErrorMessage } from '../../utils/auth-error-message';
 import { showSnackbar } from '../snackbar/snackbar';
 import { createAuthFormPending } from './auth-form-pending';
+import { bindGoogleAuth } from './auth-form-google';
 
 import userIconUrl from '../../assets/icons/auth-user.svg';
 import emailIconUrl from '../../assets/icons/auth-email.svg';
@@ -212,6 +213,13 @@ export function createRegisterForm(
   ]);
 
   const pending = createAuthFormPending(form, isFormValid);
+  bindGoogleAuth({
+    form,
+    button: google,
+    label: googleText,
+    pending,
+    callbacks,
+  });
 
   async function submitRegistration(): Promise<void> {
     const formData = new FormData(form);

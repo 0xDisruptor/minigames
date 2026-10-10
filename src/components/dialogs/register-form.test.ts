@@ -6,11 +6,13 @@ import { createRegisterForm } from './register-form';
 
 const authMocks = vi.hoisted(() => ({
   registerWithEmail: vi.fn(),
+  loginWithGoogle: vi.fn(),
   showSnackbar: vi.fn(),
 }));
 
 vi.mock('../../services/auth', () => ({
   registerWithEmail: authMocks.registerWithEmail,
+  loginWithGoogle: authMocks.loginWithGoogle,
 }));
 
 vi.mock('../snackbar/snackbar', () => ({

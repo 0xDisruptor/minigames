@@ -7,6 +7,7 @@ import { loginWithEmail } from '../../services/auth';
 import { getAuthErrorMessage } from '../../utils/auth-error-message';
 import { showSnackbar } from '../snackbar/snackbar';
 import { createAuthFormPending } from './auth-form-pending';
+import { bindGoogleAuth } from './auth-form-google';
 
 import emailIconUrl from '../../assets/icons/auth-email.svg';
 import lockIconUrl from '../../assets/icons/auth-lock.svg';
@@ -161,6 +162,13 @@ export function createLoginForm(
   ]);
 
   const pending = createAuthFormPending(form, isFormValid);
+  bindGoogleAuth({
+    form,
+    button: google,
+    label: googleText,
+    pending,
+    callbacks,
+  });
 
   async function submitLogin(): Promise<void> {
     const formData = new FormData(form);
