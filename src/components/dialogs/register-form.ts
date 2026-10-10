@@ -6,6 +6,12 @@ import {
   validateRegisterPassword,
   validateUsername,
 } from '../../utils/auth-validation';
+import type { User } from 'firebase/auth';
+import { registerWithEmail } from '../../services/auth';
+import { getAuthErrorMessage } from '../../utils/auth-error-message';
+import { showSnackbar } from '../snackbar/snackbar';
+import { createAuthFormPending } from './auth-form-pending';
+import { bindGoogleAuth } from './auth-form-google';
 
 import userIconUrl from '../../assets/icons/auth-user.svg';
 import emailIconUrl from '../../assets/icons/auth-email.svg';
@@ -70,7 +76,15 @@ export function createAuthField(options: AuthFieldOptions): HTMLDivElement {
   return field;
 }
 
-export function createRegisterForm(onLogin: () => void): HTMLFormElement {
+export interface RegistrationFormCallbacks {
+  readonly onAuthenticated?: (user: User) => void;
+  readonly onPendingChange?: (isPending: boolean) => void;
+}
+
+export function createRegisterForm(
+  onLogin: () => void,
+  callbacks: RegistrationFormCallbacks = {},
+): HTMLFormElement {
   const form: HTMLFormElement = document.createElement('form');
   form.className = 'auth-form';
   form.noValidate = true;
@@ -171,11 +185,6 @@ export function createRegisterForm(onLogin: () => void): HTMLFormElement {
 
   form.append(header, fields, submit, divider, google, footer);
 
-  // Story 1 implements the form UI without submitting credentials.
-  form.addEventListener('submit', (event: SubmitEvent): void => {
-    event.preventDefault();
-  });
-
   const passwordElement = form.querySelector<HTMLInputElement>('#register-password');
 
   if (!passwordElement) {
@@ -184,7 +193,7 @@ export function createRegisterForm(onLogin: () => void): HTMLFormElement {
 
   const passwordInput: HTMLInputElement = passwordElement;
 
-  bindAuthFormValidation(form, [
+  const isFormValid = bindAuthFormValidation(form, [
     {
       id: 'register-username',
       validate: validateUsername,
@@ -202,6 +211,58 @@ export function createRegisterForm(onLogin: () => void): HTMLFormElement {
       validate: (value: string) => validateConfirmPassword(value, passwordInput.value),
     },
   ]);
+
+  const pending = createAuthFormPending(form, isFormValid);
+  bindGoogleAuth({
+    form,
+    button: google,
+    label: googleText,
+    pending,
+    callbacks,
+  });
+
+  async function submitRegistration(): Promise<void> {
+    const formData = new FormData(form);
+
+    const credentials = {
+      username: String(formData.get('register-username') ?? ''),
+      email: String(formData.get('register-email') ?? ''),
+      password: String(formData.get('register-password') ?? ''),
+    };
+
+    pending.setPending(true);
+    submit.textContent = 'Creating account…';
+
+    let user: User;
+
+    try {
+      callbacks.onPendingChange?.(true);
+      user = await registerWithEmail(credentials);
+    } catch (error: unknown) {
+      showSnackbar(getAuthErrorMessage(error), 'error');
+      return;
+    } finally {
+      pending.setPending(false);
+      submit.textContent = 'Create Account';
+      callbacks.onPendingChange?.(false);
+    }
+
+    form.reset();
+    callbacks.onAuthenticated?.(user);
+    showSnackbar('Account created successfully.', 'success');
+  }
+
+  form.addEventListener('submit', (event: SubmitEvent): void => {
+    const shouldSkipSubmit = event.defaultPrevented || pending.isPending();
+
+    event.preventDefault();
+
+    if (shouldSkipSubmit || !isFormValid()) {
+      return;
+    }
+
+    void submitRegistration();
+  });
 
   return form;
 }
