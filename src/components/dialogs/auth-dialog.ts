@@ -47,7 +47,21 @@ export function createAuthDialog(
   let restoreTarget: HTMLElement | undefined;
   let hasStartedOnBackdrop = false;
 
+  let isPending = false;
+
+  function setPending(shouldBePending: boolean): void {
+    isPending = shouldBePending;
+    dialog.setAttribute('aria-busy', String(isPending));
+
+    for (const mode of modes) {
+      tabs[mode].disabled = isPending;
+    }
+  }
+
   function selectMode(mode: AuthMode, shouldFocusTab: boolean): void {
+    if (isPending) {
+      return;
+    }
     const hasChanged = mode !== activeMode;
 
     if (hasChanged) {
@@ -86,6 +100,9 @@ export function createAuthDialog(
   }
 
   function requestMode(mode: AuthMode): void {
+    if (isPending) {
+      return;
+    }
     if (onModeChange) {
       onModeChange(mode);
       return;
@@ -94,9 +111,14 @@ export function createAuthDialog(
     selectMode(mode, true);
   }
 
-  const loginForm = createLoginForm((): void => {
-    requestMode('register');
-  });
+  const loginForm = createLoginForm(
+    (): void => {
+      requestMode('register');
+    },
+    {
+      onPendingChange: setPending,
+    },
+  );
 
   const registerForm = createRegisterForm((): void => {
     requestMode('login');
@@ -141,7 +163,7 @@ export function createAuthDialog(
   selectMode('login', false);
 
   function close(): void {
-    if (!dialog.open) {
+    if (isPending || !dialog.open) {
       return;
     }
 
@@ -154,6 +176,9 @@ export function createAuthDialog(
   }
 
   function requestClose(): void {
+    if (isPending) {
+      return;
+    }
     if (onRequestClose) {
       onRequestClose();
       return;
@@ -208,6 +233,9 @@ export function createAuthDialog(
   });
 
   const open: OpenAuth = (mode: AuthMode, trigger?: HTMLElement): void => {
+    if (isPending) {
+      return;
+    }
     selectMode(mode, false);
 
     if (!dialog.open) {

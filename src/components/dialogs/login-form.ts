@@ -2,13 +2,26 @@ import './auth-form.scss';
 import { createAuthField } from './register-form';
 import { bindAuthFormValidation } from './auth-form-validation';
 import { validateEmail, validateLoginPassword } from '../../utils/auth-validation';
+import type { User } from 'firebase/auth';
+import { loginWithEmail } from '../../services/auth';
+import { getAuthErrorMessage } from '../../utils/auth-error-message';
+import { showSnackbar } from '../snackbar/snackbar';
+import { createAuthFormPending } from './auth-form-pending';
 
 import emailIconUrl from '../../assets/icons/auth-email.svg';
 import lockIconUrl from '../../assets/icons/auth-lock.svg';
 import eyeIconUrl from '../../assets/icons/auth-eye.svg';
 import googleIconUrl from '../../assets/icons/google.svg';
 
-export function createLoginForm(onRegister: () => void): HTMLFormElement {
+export interface LoginFormCallbacks {
+  readonly onAuthenticated?: (user: User) => void;
+  readonly onPendingChange?: (isPending: boolean) => void;
+}
+
+export function createLoginForm(
+  onRegister: () => void,
+  callbacks: LoginFormCallbacks = {},
+): HTMLFormElement {
   const form: HTMLFormElement = document.createElement('form');
   form.className = 'auth-form';
   form.noValidate = true;
@@ -136,11 +149,7 @@ export function createLoginForm(onRegister: () => void): HTMLFormElement {
 
   form.append(header, fields, recovery, submit, divider, google, footer);
 
-  form.addEventListener('submit', (event: SubmitEvent): void => {
-    event.preventDefault();
-  });
-
-  bindAuthFormValidation(form, [
+  const isFormValid = bindAuthFormValidation(form, [
     {
       id: 'login-email',
       validate: validateEmail,
@@ -150,6 +159,50 @@ export function createLoginForm(onRegister: () => void): HTMLFormElement {
       validate: validateLoginPassword,
     },
   ]);
+
+  const pending = createAuthFormPending(form, isFormValid);
+
+  async function submitLogin(): Promise<void> {
+    const formData = new FormData(form);
+
+    const credentials = {
+      email: String(formData.get('login-email') ?? ''),
+      password: String(formData.get('login-password') ?? ''),
+    };
+
+    pending.setPending(true);
+    submit.textContent = 'Signing in…';
+
+    let user: User;
+
+    try {
+      callbacks.onPendingChange?.(true);
+      user = await loginWithEmail(credentials);
+    } catch (error: unknown) {
+      showSnackbar(getAuthErrorMessage(error), 'error');
+      return;
+    } finally {
+      pending.setPending(false);
+      submit.textContent = 'Login';
+      callbacks.onPendingChange?.(false);
+    }
+
+    form.reset();
+    callbacks.onAuthenticated?.(user);
+    showSnackbar('Signed in successfully.', 'success');
+  }
+
+  form.addEventListener('submit', (event: SubmitEvent): void => {
+    const shouldSkipSubmit = event.defaultPrevented || pending.isPending();
+
+    event.preventDefault();
+
+    if (shouldSkipSubmit || !isFormValid()) {
+      return;
+    }
+
+    void submitLogin();
+  });
 
   return form;
 }
