@@ -279,7 +279,7 @@ export function createGameDetailsDialog(onRequestClose?: () => void) {
       return;
     }
 
-    close();
+    requestClose();
   });
 
   dialog.addEventListener('close', (): void => {
