@@ -134,10 +134,10 @@ export function createGameDetailsComments(options: GameDetailsActions = {}): Gam
   section.append(heading, form.element, results);
 
   async function wasCommentSubmitted(
-  input: CreateGameCommentInput,
-  session: AppSession,
-  signal: AbortSignal,
-): Promise<boolean> {
+    input: CreateGameCommentInput,
+    session: AppSession,
+    signal: AbortSignal,
+  ): Promise<boolean> {
     const slug = currentSlug;
 
     if (!slug || signal.aborted || getActiveSession() !== session) {
