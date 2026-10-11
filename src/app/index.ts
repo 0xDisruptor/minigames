@@ -7,8 +7,12 @@ import { createHeader } from '../components/header/header';
 import { createFooter } from '../components/footer/footer';
 import { createAuthDialog } from '../components/dialogs/auth-dialog';
 import { createGameDetailsDialog } from '../components/dialogs/game-details-dialog';
+import { bindAppSessionLifecycle } from '../services/app-session-lifecycle';
+import { createAppSessionFromUser } from '../services/app-session-user';
+import type { AppSession } from '../state/app-session';
 import { updateUrlQuery } from './navigation';
 import { initRouter } from './router';
+import { sessionController } from './session';
 
 const app = document.createElement('div');
 app.id = 'app';
@@ -20,13 +24,28 @@ const dialogContext: { trigger?: HTMLElement } = {};
 
 const authDialog = createAuthDialog(
   (mode): void => {
-    updateUrlQuery({
-      auth: mode,
-      game: undefined,
-    });
+    updateUrlQuery({ auth: mode });
   },
   (): void => {
     updateUrlQuery({ auth: undefined });
+  },
+  {
+    onBeforeAuthenticate: async (): Promise<void> => {
+      await sessionController.initialize();
+      await sessionController.whenReady();
+    },
+    onAuthenticated: async (user): Promise<void> => {
+      let session: AppSession;
+
+      try {
+        session = createAppSessionFromUser(user);
+      } catch (error: unknown) {
+        await sessionController.logout();
+        throw error;
+      }
+
+      await sessionController.activate(session);
+    },
   },
 );
 
@@ -36,11 +55,7 @@ const gameDetailsDialog = createGameDetailsDialog((): void => {
 
 const header = createHeader((mode, trigger): void => {
   dialogContext.trigger = trigger;
-
-  updateUrlQuery({
-    auth: mode,
-    game: undefined,
-  });
+  updateUrlQuery({ auth: mode });
 });
 
 app.append(header, outlet, createFooter(), authDialog.element, gameDetailsDialog.element);
@@ -72,15 +87,22 @@ app.addEventListener('click', (event: MouseEvent): void => {
   });
 });
 
-document.body.append(app);
+async function startApp(): Promise<void> {
+  bindAppSessionLifecycle(sessionController);
+  await sessionController.initialize();
 
-initRouter(app, outlet, {
-  auth: authDialog,
-  game: gameDetailsDialog,
+  document.body.append(app);
 
-  takeTrigger(): HTMLElement | undefined {
-    const trigger = dialogContext.trigger;
-    dialogContext.trigger = undefined;
-    return trigger;
-  },
-});
+  initRouter(app, outlet, {
+    auth: authDialog,
+    game: gameDetailsDialog,
+
+    takeTrigger(): HTMLElement | undefined {
+      const trigger = dialogContext.trigger;
+      dialogContext.trigger = undefined;
+      return trigger;
+    },
+  });
+}
+
+void startApp();
