@@ -7,5 +7,7 @@ export const sessionController = createAppSessionController({
   },
   onError: (error: unknown): void => {
     console.error('App session operation failed.', error);
+
+    showSnackbar('A session error occurred. Please sign in again.', 'error');
   },
 });
