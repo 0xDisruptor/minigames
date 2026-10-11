@@ -1,6 +1,6 @@
 import './snackbar.scss';
 
-type SnackbarVariant = 'success' | 'error';
+type SnackbarVariant = 'success' | 'error' | 'info' | 'warning';
 
 const DISMISS_DELAY = 5000;
 const state: { container?: HTMLDivElement; timerId?: number } = {};
