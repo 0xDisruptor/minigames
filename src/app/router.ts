@@ -95,7 +95,7 @@ export function initRouter(root: HTMLElement, outlet: HTMLElement, dialogs: Rout
     }
 
     if (authMode === 'login' || authMode === 'register') {
-      dialogs.game.close();
+      dialogs.game.suspend();
       dialogs.auth.open(authMode, trigger);
       return;
     }

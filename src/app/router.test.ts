@@ -96,6 +96,7 @@ async function createFixture(url = '/minigames/library?game=chess#details', sess
     open: vi.fn(),
     openBySlug: vi.fn(),
     close: vi.fn(),
+    suspend: vi.fn(),
   };
 
   const checkSession = vi.fn((): void => {
