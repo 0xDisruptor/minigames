@@ -42,7 +42,7 @@ export function createGameDetailsDialog(
   const content = document.createElement('div');
   content.className = 'game-dialog__content';
 
-  const comments = createGameDetailsComments();
+  const comments = createGameDetailsComments(options);
 
   dialog.append(hero, content);
 
