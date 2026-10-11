@@ -22,6 +22,29 @@ export async function getJson(path: string, signal?: AbortSignal): Promise<unkno
   return response.json();
 }
 
+export async function postJson(
+  path: string,
+  body: Readonly<Record<string, unknown>>,
+  signal?: AbortSignal,
+): Promise<unknown> {
+  const url = new URL(path, API_BASE_URL);
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+    signal,
+  });
+
+  if (!response.ok) {
+    throw new ApiError(response.status);
+  }
+
+  return response.json();
+}
+
 export interface FeaturedGame {
   readonly slug: string;
   readonly name: string;
@@ -333,10 +356,13 @@ function isGameDetails(value: unknown): value is GameDetails {
 export async function getGameDetails(
   gameSlug: string,
   signal?: AbortSignal,
+  userEmail?: string,
 ): Promise<GameDetails | undefined> {
-  const response = await getJson(`games/${encodeURIComponent(gameSlug)}`, signal);
+  const query = userEmail ? `?${new URLSearchParams({ userEmail }).toString()}` : '';
 
-  if (typeof response !== 'object' || response === null || !('data' in response)) {
+  const response = await getJson(`games/${encodeURIComponent(gameSlug)}${query}`, signal);
+
+  if (typeof response !== 'object' || !response || !('data' in response)) {
     throw new Error('Invalid game details response');
   }
 
@@ -346,6 +372,48 @@ export async function getGameDetails(
 
   if (!isGameDetails(response.data)) {
     throw new Error('Invalid game details response');
+  }
+
+  return response.data;
+}
+
+export interface GameFavoriteResult {
+  readonly isFavorited: boolean;
+  readonly likesCount: number;
+}
+
+function isGameFavoriteResult(value: unknown): value is GameFavoriteResult {
+  return (
+    typeof value === 'object' &&
+    !!value &&
+    !Array.isArray(value) &&
+    'isFavorited' in value &&
+    typeof value.isFavorited === 'boolean' &&
+    'likesCount' in value &&
+    typeof value.likesCount === 'number' &&
+    Number.isSafeInteger(value.likesCount) &&
+    value.likesCount >= 0
+  );
+}
+
+export async function toggleGameFavorite(
+  gameSlug: string,
+  userEmail: string,
+  signal?: AbortSignal,
+): Promise<GameFavoriteResult> {
+  const response = await postJson(
+    `games/${encodeURIComponent(gameSlug)}/favorite`,
+    { userEmail },
+    signal,
+  );
+
+  if (
+    typeof response !== 'object' ||
+    !response ||
+    !('data' in response) ||
+    !isGameFavoriteResult(response.data)
+  ) {
+    throw new Error('Invalid favorite response');
   }
 
   return response.data;
