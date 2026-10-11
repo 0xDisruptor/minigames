@@ -11,7 +11,8 @@ import type { GameDetailsActions } from './game-details-info';
 import { createCommentAvatarPalette } from '../../utils/comment-avatar';
 import type { CommentAvatarTone } from '../../utils/comment-avatar';
 import { getCommentAuthorInitial } from '../../utils/comment-validation';
-
+import { createGameCommentLikeButton } from './game-comment-like';
+import type { GameCommentLikeOptions } from './game-comment-like';
 interface GameDetailsComments {
   readonly element: HTMLElement;
   load: (gameSlug: string) => Promise<void>;
@@ -29,7 +30,8 @@ function createAvatar(letter: string, tone: string): HTMLSpanElement {
 function createCommentItem(
   comment: GameComment,
   tone: CommentAvatarTone,
-  isAuthenticated: boolean,
+  options: GameCommentLikeOptions,
+  lifetimeSignal: AbortSignal,
 ): HTMLLIElement {
   const item = document.createElement('li');
   item.className = 'game-comments__item';
@@ -60,28 +62,7 @@ function createCommentItem(
   text.className = 'game-comments__text';
   text.textContent = comment.text;
 
-  const isLiked = isAuthenticated && comment.isLikedByCurrentUser;
-
-  const likeButton = document.createElement('button');
-  likeButton.type = 'button';
-  likeButton.className = 'game-comments__like';
-  likeButton.disabled = true;
-  likeButton.setAttribute('aria-pressed', String(isLiked));
-  likeButton.setAttribute(
-    'aria-label',
-    `${comment.likesCount} likes on comment by ${comment.authorName}`,
-  );
-
-  const heart = document.createElement('span');
-  heart.className = 'game-comments__heart';
-  heart.textContent = isLiked ? '♥' : '♡';
-  heart.setAttribute('aria-hidden', 'true');
-
-  const likes = document.createElement('span');
-  likes.className = 'game-comments__likes-count';
-  likes.textContent = String(comment.likesCount);
-
-  likeButton.append(heart, likes);
+  const likeButton = createGameCommentLikeButton(comment, options, lifetimeSignal);
   item.append(header, text, likeButton);
 
   return item;
@@ -114,6 +95,8 @@ export function createGameDetailsComments(options: GameDetailsActions = {}): Gam
 
   const results = document.createElement('div');
   results.className = 'game-comments__results';
+
+  let commentActionsController: AbortController | undefined;
 
   let request: AbortController | undefined;
   let currentSlug: string | undefined;
@@ -212,6 +195,9 @@ export function createGameDetailsComments(options: GameDetailsActions = {}): Gam
       unsubscribe = options.sessionStore.subscribe(onSessionChange);
     }
 
+    commentActionsController?.abort();
+    commentActionsController = undefined;
+
     request?.abort();
 
     const controller = new AbortController();
@@ -245,9 +231,30 @@ export function createGameDetailsComments(options: GameDetailsActions = {}): Gam
         const list = document.createElement('ul');
         list.className = 'game-comments__list';
 
+        const actionsController = new AbortController();
+        commentActionsController = actionsController;
+
+        const likeOptions: GameCommentLikeOptions = {
+          ...options,
+          ...(session && { loadedSession: session }),
+          onRefreshComments: (): void => {
+            if (currentSlug !== gameSlug) {
+              return;
+            }
+
+            hasFailed = true;
+            void load(gameSlug);
+          },
+        };
+
         for (const comment of response.data) {
           list.append(
-            createCommentItem(comment, avatarPalette.getTone(comment.authorName), Boolean(session)),
+            createCommentItem(
+              comment,
+              avatarPalette.getTone(comment.authorName),
+              likeOptions,
+              actionsController.signal,
+            ),
           );
         }
 
@@ -300,6 +307,8 @@ export function createGameDetailsComments(options: GameDetailsActions = {}): Gam
     heading.textContent = 'Comments';
     results.setAttribute('aria-busy', 'false');
     results.replaceChildren();
+    commentActionsController?.abort();
+    commentActionsController = undefined;
   }
 
   return { element: section, load, reset };
