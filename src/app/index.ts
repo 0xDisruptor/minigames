@@ -53,10 +53,20 @@ const gameDetailsDialog = createGameDetailsDialog((): void => {
   updateUrlQuery({ game: undefined });
 });
 
-const header = createHeader((mode, trigger): void => {
-  dialogContext.trigger = trigger;
-  updateUrlQuery({ auth: mode });
-});
+const header = createHeader(
+  (mode, trigger): void => {
+    dialogContext.trigger = trigger;
+    updateUrlQuery({ auth: mode });
+  },
+  async (): Promise<void> => {
+    if (!sessionController.getActiveSession()) {
+      await sessionController.whenReady();
+      return;
+    }
+
+    await sessionController.logout();
+  },
+);
 
 app.append(header, outlet, createFooter(), authDialog.element, gameDetailsDialog.element);
 
