@@ -251,4 +251,20 @@
     line-height: 1.5;
     text-align: right;
   }
+
+  &__error {
+    margin: tokens.$size-05 0 0;
+    color: tokens.$error;
+    font-size: tokens.$label-medium;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
+  &__input[aria-invalid='true'] {
+    border-color: tokens.$error;
+
+    &:focus {
+      outline-color: tokens.$error;
+    }
+  }
 }

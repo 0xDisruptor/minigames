@@ -31,6 +31,15 @@
     background: tokens.$error;
   }
 
+  &--info {
+    background: tokens.$tertiary;
+  }
+
+  &--warning {
+    color: tokens.$on-primary;
+    background: tokens.$primary;
+  }
+
   &__close {
     padding: tokens.$size-05;
     border: 0;

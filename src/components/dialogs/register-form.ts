@@ -1,4 +1,17 @@
 import './auth-form.scss';
+import { bindAuthFormValidation } from './auth-form-validation';
+import {
+  validateConfirmPassword,
+  validateEmail,
+  validateRegisterPassword,
+  validateUsername,
+} from '../../utils/auth-validation';
+import type { User } from 'firebase/auth';
+import { registerWithEmail } from '../../services/auth';
+import { getAuthErrorMessage } from '../../utils/auth-error-message';
+import { showSnackbar } from '../snackbar/snackbar';
+import { createAuthFormPending } from './auth-form-pending';
+import { bindGoogleAuth } from './auth-form-google';
 
 import userIconUrl from '../../assets/icons/auth-user.svg';
 import emailIconUrl from '../../assets/icons/auth-email.svg';
@@ -40,6 +53,16 @@ export function createAuthField(options: AuthFieldOptions): HTMLDivElement {
   input.type = options.type;
   input.placeholder = options.placeholder;
   input.setAttribute('autocomplete', options.autocomplete);
+  input.required = true;
+  input.setAttribute('aria-invalid', 'false');
+
+  const error: HTMLParagraphElement = document.createElement('p');
+  error.id = `${options.id}-error`;
+  error.className = 'auth-form__error';
+  error.setAttribute('aria-live', 'polite');
+  error.hidden = true;
+
+  input.setAttribute('aria-describedby', error.id);
 
   if (options.type === 'email') {
     input.inputMode = 'email';
@@ -48,12 +71,22 @@ export function createAuthField(options: AuthFieldOptions): HTMLDivElement {
   }
 
   control.append(icon, input);
-  field.append(label, control);
+  field.append(label, control, error);
 
   return field;
 }
 
-export function createRegisterForm(onLogin: () => void): HTMLFormElement {
+export interface RegistrationFormCallbacks {
+  readonly onBeforeAuthenticate?: () => void | Promise<void>;
+  readonly onAuthenticated?: (user: User) => void | Promise<void>;
+  readonly onAuthenticationComplete?: () => void;
+  readonly onPendingChange?: (isPending: boolean) => void;
+}
+
+export function createRegisterForm(
+  onLogin: () => void,
+  callbacks: RegistrationFormCallbacks = {},
+): HTMLFormElement {
   const form: HTMLFormElement = document.createElement('form');
   form.className = 'auth-form';
   form.noValidate = true;
@@ -81,7 +114,7 @@ export function createRegisterForm(onLogin: () => void): HTMLFormElement {
       id: 'register-username',
       label: 'Username',
       type: 'text',
-      placeholder: 'e.g. CozyGamer_99',
+      placeholder: 'e.g. CozyGamer99',
       autocomplete: 'username',
       iconUrl: userIconUrl,
     },
@@ -97,7 +130,7 @@ export function createRegisterForm(onLogin: () => void): HTMLFormElement {
       id: 'register-password',
       label: 'Password',
       type: 'password',
-      placeholder: 'Min. 8 characters',
+      placeholder: 'Min. 6 characters',
       autocomplete: 'new-password',
       iconUrl: lockIconUrl,
     },
@@ -154,9 +187,87 @@ export function createRegisterForm(onLogin: () => void): HTMLFormElement {
 
   form.append(header, fields, submit, divider, google, footer);
 
-  // Story 1 implements the form UI without submitting credentials.
+  const passwordElement = form.querySelector<HTMLInputElement>('#register-password');
+
+  if (!passwordElement) {
+    throw new Error('Registration password input is missing.');
+  }
+
+  const passwordInput: HTMLInputElement = passwordElement;
+
+  const isFormValid = bindAuthFormValidation(form, [
+    {
+      id: 'register-username',
+      validate: validateUsername,
+    },
+    {
+      id: 'register-email',
+      validate: validateEmail,
+    },
+    {
+      id: 'register-password',
+      validate: validateRegisterPassword,
+    },
+    {
+      id: 'register-confirm-password',
+      validate: (value: string) => validateConfirmPassword(value, passwordInput.value),
+    },
+  ]);
+
+  const pending = createAuthFormPending(form, isFormValid);
+  bindGoogleAuth({
+    form,
+    button: google,
+    label: googleText,
+    pending,
+    callbacks,
+  });
+
+  async function submitRegistration(): Promise<void> {
+    const formData = new FormData(form);
+
+    const credentials = {
+      username: String(formData.get('register-username') ?? ''),
+      email: String(formData.get('register-email') ?? ''),
+      password: String(formData.get('register-password') ?? ''),
+    };
+
+    pending.setPending(true);
+    submit.textContent = 'Creating account…';
+
+    try {
+      callbacks.onPendingChange?.(true);
+
+      if (callbacks.onBeforeAuthenticate) {
+        await callbacks.onBeforeAuthenticate();
+      }
+
+      const user = await registerWithEmail(credentials);
+      await callbacks.onAuthenticated?.(user);
+    } catch (error: unknown) {
+      showSnackbar(getAuthErrorMessage(error), 'error');
+      return;
+    } finally {
+      pending.setPending(false);
+      submit.textContent = 'Create Account';
+      callbacks.onPendingChange?.(false);
+    }
+
+    form.reset();
+    callbacks.onAuthenticationComplete?.();
+    showSnackbar('Account created successfully.', 'success');
+  }
+
   form.addEventListener('submit', (event: SubmitEvent): void => {
+    const shouldSkipSubmit = event.defaultPrevented || pending.isPending();
+
     event.preventDefault();
+
+    if (shouldSkipSubmit || !isFormValid()) {
+      return;
+    }
+
+    void submitRegistration();
   });
 
   return form;

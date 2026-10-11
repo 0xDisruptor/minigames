@@ -1,10 +1,16 @@
 import './auth-dialog.scss';
 import { createLoginForm } from './login-form';
 import { createRegisterForm } from './register-form';
+import type { LoginFormCallbacks } from './login-form';
 
 export type AuthMode = 'login' | 'register';
 
 export type OpenAuth = (mode: AuthMode, trigger?: HTMLElement) => void;
+
+export type AuthDialogCallbacks = Pick<
+  LoginFormCallbacks,
+  'onBeforeAuthenticate' | 'onAuthenticated'
+>;
 
 interface AuthDialog {
   readonly element: HTMLDialogElement;
@@ -21,6 +27,7 @@ function getAnimationDuration(): number {
 export function createAuthDialog(
   onModeChange?: (mode: AuthMode) => void,
   onRequestClose?: () => void,
+  callbacks: AuthDialogCallbacks = {},
 ): AuthDialog {
   const dialog = document.createElement('dialog');
   dialog.className = 'auth-dialog';
@@ -47,10 +54,29 @@ export function createAuthDialog(
   let restoreTarget: HTMLElement | undefined;
   let hasStartedOnBackdrop = false;
 
-  function selectMode(mode: AuthMode, shouldFocusTab: boolean): void {
-    const hasChanged = mode !== activeMode;
-    activeMode = mode;
+  let isPending = false;
 
+  function setPending(shouldBePending: boolean): void {
+    isPending = shouldBePending;
+    dialog.setAttribute('aria-busy', String(isPending));
+
+    for (const mode of modes) {
+      tabs[mode].disabled = isPending;
+    }
+  }
+
+  function selectMode(mode: AuthMode, shouldFocusTab: boolean): void {
+    if (isPending) {
+      return;
+    }
+    const hasChanged = mode !== activeMode;
+
+    if (hasChanged) {
+      loginForm.reset();
+      registerForm.reset();
+    }
+
+    activeMode = mode;
     for (const current of modes) {
       const isSelected = current === mode;
       tabs[current].setAttribute('aria-selected', String(isSelected));
@@ -81,6 +107,9 @@ export function createAuthDialog(
   }
 
   function requestMode(mode: AuthMode): void {
+    if (isPending) {
+      return;
+    }
     if (onModeChange) {
       onModeChange(mode);
       return;
@@ -89,14 +118,27 @@ export function createAuthDialog(
     selectMode(mode, true);
   }
 
-  const loginForm = createLoginForm((): void => {
-    requestMode('register');
-  });
+  const loginForm = createLoginForm(
+    (): void => {
+      requestMode('register');
+    },
+    {
+      ...callbacks,
+      onPendingChange: setPending,
+      onAuthenticationComplete: requestClose,
+    },
+  );
 
-  const registerForm = createRegisterForm((): void => {
-    requestMode('login');
-  });
-
+  const registerForm = createRegisterForm(
+    (): void => {
+      requestMode('login');
+    },
+    {
+      ...callbacks,
+      onPendingChange: setPending,
+      onAuthenticationComplete: requestClose,
+    },
+  );
   panels.login.append(loginForm);
   panels.register.append(registerForm);
 
@@ -136,7 +178,7 @@ export function createAuthDialog(
   selectMode('login', false);
 
   function close(): void {
-    if (!dialog.open) {
+    if (isPending || !dialog.open) {
       return;
     }
 
@@ -149,6 +191,9 @@ export function createAuthDialog(
   }
 
   function requestClose(): void {
+    if (isPending) {
+      return;
+    }
     if (onRequestClose) {
       onRequestClose();
       return;
@@ -203,6 +248,9 @@ export function createAuthDialog(
   });
 
   const open: OpenAuth = (mode: AuthMode, trigger?: HTMLElement): void => {
+    if (isPending) {
+      return;
+    }
     selectMode(mode, false);
 
     if (!dialog.open) {

@@ -8,8 +8,12 @@ import { dismissSnackbar, showSnackbar } from '../snackbar/snackbar';
 import { createGameDetailsInfo } from './game-details-info';
 import { createGameDetailsRecords } from './game-details-records';
 import { createGameDetailsComments } from './game-details-comment';
+import type { GameDetailsActions } from './game-details-info';
 
-export function createGameDetailsDialog(onRequestClose?: () => void) {
+export function createGameDetailsDialog(
+  onRequestClose?: () => void,
+  options: GameDetailsActions = {},
+) {
   const dialog = document.createElement('dialog');
   dialog.className = 'game-dialog';
   dialog.setAttribute('aria-labelledby', 'game-dialog-title');
@@ -38,15 +42,19 @@ export function createGameDetailsDialog(onRequestClose?: () => void) {
   const content = document.createElement('div');
   content.className = 'game-dialog__content';
 
-  const comments = createGameDetailsComments();
+  const comments = createGameDetailsComments(options);
 
   dialog.append(hero, content);
 
   let opener: HTMLElement | undefined;
   let currentSlug: string | undefined;
   let request: AbortController | undefined;
+  let contentController: AbortController | undefined;
   let hasFailed = false;
   let wasPointerStartedOutside = false;
+  let isSuspended = false;
+  let suspendedScrollTop = 0;
+  let shouldReloadOnResume = false;
 
   function showState(title: string, state: HTMLElement): void {
     const heading = document.createElement('h2');
@@ -70,6 +78,8 @@ export function createGameDetailsDialog(onRequestClose?: () => void) {
     }
 
     request?.abort();
+    contentController?.abort();
+    contentController = undefined;
     comments.reset();
 
     const controller = new AbortController();
@@ -80,7 +90,9 @@ export function createGameDetailsDialog(onRequestClose?: () => void) {
     showState('Game details', createSkeleton('Loading game details'));
 
     try {
-      const game = await getGameDetails(slug, controller.signal);
+      const loadedSession = options.getActiveSession?.();
+
+      const game = await getGameDetails(slug, controller.signal, loadedSession?.email);
 
       if (!dialog.open || controller.signal.aborted) {
         return;
@@ -99,8 +111,18 @@ export function createGameDetailsDialog(onRequestClose?: () => void) {
       cover.height = 220;
 
       media.replaceChildren(cover);
+      const actionsController = new AbortController();
+      contentController = actionsController;
+
       content.replaceChildren(
-        createGameDetailsInfo(game),
+        createGameDetailsInfo(
+          game,
+          {
+            ...options,
+            ...(loadedSession && { loadedSession }),
+          },
+          actionsController.signal,
+        ),
         createGameDetailsRecords(game.topRecords),
         comments.element,
       );
@@ -141,10 +163,52 @@ export function createGameDetailsDialog(onRequestClose?: () => void) {
     }
   }
 
+  function resetClosedState(): void {
+    request?.abort();
+    contentController?.abort();
+    contentController = undefined;
+    comments.reset();
+
+    request = undefined;
+    currentSlug = undefined;
+    isSuspended = false;
+    suspendedScrollTop = 0;
+    shouldReloadOnResume = false;
+    wasPointerStartedOutside = false;
+
+    if (opener?.isConnected) {
+      opener.focus({ preventScroll: true });
+    }
+
+    opener = undefined;
+  }
+
   function close(): void {
+    if (isSuspended) {
+      dismissSnackbar();
+      resetClosedState();
+      return;
+    }
+
     if (!dialog.open) {
       return;
     }
+
+    request?.abort();
+    contentController?.abort();
+    comments.reset();
+    dismissSnackbar();
+    dialog.close();
+  }
+
+  function suspend(): void {
+    if (!dialog.open) {
+      return;
+    }
+
+    isSuspended = true;
+    suspendedScrollTop = dialog.scrollTop;
+    shouldReloadOnResume = content.getAttribute('aria-busy') === 'true';
 
     request?.abort();
     dismissSnackbar();
@@ -164,6 +228,30 @@ export function createGameDetailsDialog(onRequestClose?: () => void) {
     if (!slug || (currentSlug === slug && dialog.open)) {
       return;
     }
+
+    if (isSuspended && currentSlug === slug) {
+      const scrollTop = suspendedScrollTop;
+      const shouldReload = shouldReloadOnResume;
+
+      isSuspended = false;
+      suspendedScrollTop = 0;
+      shouldReloadOnResume = false;
+      opener = trigger ?? opener;
+
+      dismissSnackbar();
+      dialog.showModal();
+      dialog.scrollTop = scrollTop;
+
+      if (shouldReload) {
+        void loadGame();
+      }
+
+      return;
+    }
+
+    isSuspended = false;
+    suspendedScrollTop = 0;
+    shouldReloadOnResume = false;
 
     opener = trigger ?? (dialog.open ? opener : undefined);
     currentSlug = slug;
@@ -214,25 +302,16 @@ export function createGameDetailsDialog(onRequestClose?: () => void) {
       return;
     }
 
-    close();
+    requestClose();
   });
 
   dialog.addEventListener('close', (): void => {
-    if (dialog.open) {
+    if (isSuspended || dialog.open) {
       return;
     }
-    request?.abort();
-    comments.reset();
-    request = undefined;
-    currentSlug = undefined;
-    wasPointerStartedOutside = false;
 
-    if (opener?.isConnected) {
-      opener.focus({ preventScroll: true });
-    }
-
-    opener = undefined;
+    resetClosedState();
   });
 
-  return { element: dialog, open, openBySlug, close };
+  return { element: dialog, open, openBySlug, close, suspend };
 }

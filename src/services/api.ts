@@ -22,6 +22,29 @@ export async function getJson(path: string, signal?: AbortSignal): Promise<unkno
   return response.json();
 }
 
+export async function postJson(
+  path: string,
+  body: Readonly<Record<string, unknown>>,
+  signal?: AbortSignal,
+): Promise<unknown> {
+  const url = new URL(path, API_BASE_URL);
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+    signal,
+  });
+
+  if (!response.ok) {
+    throw new ApiError(response.status);
+  }
+
+  return response.json();
+}
+
 export interface FeaturedGame {
   readonly slug: string;
   readonly name: string;
@@ -333,10 +356,13 @@ function isGameDetails(value: unknown): value is GameDetails {
 export async function getGameDetails(
   gameSlug: string,
   signal?: AbortSignal,
+  userEmail?: string,
 ): Promise<GameDetails | undefined> {
-  const response = await getJson(`games/${encodeURIComponent(gameSlug)}`, signal);
+  const query = userEmail ? `?${new URLSearchParams({ userEmail }).toString()}` : '';
 
-  if (typeof response !== 'object' || response === null || !('data' in response)) {
+  const response = await getJson(`games/${encodeURIComponent(gameSlug)}${query}`, signal);
+
+  if (typeof response !== 'object' || !response || !('data' in response)) {
     throw new Error('Invalid game details response');
   }
 
@@ -346,6 +372,48 @@ export async function getGameDetails(
 
   if (!isGameDetails(response.data)) {
     throw new Error('Invalid game details response');
+  }
+
+  return response.data;
+}
+
+export interface GameFavoriteResult {
+  readonly isFavorited: boolean;
+  readonly likesCount: number;
+}
+
+function isGameFavoriteResult(value: unknown): value is GameFavoriteResult {
+  return (
+    typeof value === 'object' &&
+    !!value &&
+    !Array.isArray(value) &&
+    'isFavorited' in value &&
+    typeof value.isFavorited === 'boolean' &&
+    'likesCount' in value &&
+    typeof value.likesCount === 'number' &&
+    Number.isSafeInteger(value.likesCount) &&
+    value.likesCount >= 0
+  );
+}
+
+export async function toggleGameFavorite(
+  gameSlug: string,
+  userEmail: string,
+  signal?: AbortSignal,
+): Promise<GameFavoriteResult> {
+  const response = await postJson(
+    `games/${encodeURIComponent(gameSlug)}/favorite`,
+    { userEmail },
+    signal,
+  );
+
+  if (
+    typeof response !== 'object' ||
+    !response ||
+    !('data' in response) ||
+    !isGameFavoriteResult(response.data)
+  ) {
+    throw new Error('Invalid favorite response');
   }
 
   return response.data;
@@ -392,11 +460,16 @@ function isGameComment(value: unknown): value is GameComment {
 export async function getGameComments(
   gameSlug: string,
   signal?: AbortSignal,
+  userEmail?: string,
 ): Promise<GameCommentsResponse> {
   const parameters = new URLSearchParams({
     limit: '3',
     sort: 'newest',
   });
+
+  if (userEmail) {
+    parameters.set('userEmail', userEmail);
+  }
 
   const response = await getJson(
     `games/${encodeURIComponent(gameSlug)}/comments?${parameters.toString()}`,
@@ -426,4 +499,79 @@ export async function getGameComments(
       totalComments: response.meta.totalComments,
     },
   };
+}
+
+export interface CreateGameCommentInput {
+  readonly userEmail: string;
+  readonly authorName: string;
+  readonly text: string;
+}
+
+export async function createGameComment(
+  gameSlug: string,
+  input: CreateGameCommentInput,
+  signal?: AbortSignal,
+): Promise<GameComment> {
+  const response = await postJson(
+    `games/${encodeURIComponent(gameSlug)}/comments`,
+    {
+      userEmail: input.userEmail,
+      authorName: input.authorName,
+      text: input.text,
+    },
+    signal,
+  );
+
+  if (
+    typeof response !== 'object' ||
+    !response ||
+    !('data' in response) ||
+    !isGameComment(response.data)
+  ) {
+    throw new Error('Invalid comment submission response');
+  }
+
+  return response.data;
+}
+
+export interface GameCommentLikeResult {
+  readonly isLikedByCurrentUser: boolean;
+  readonly likesCount: number;
+}
+
+function isGameCommentLikeResult(value: unknown): value is GameCommentLikeResult {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    'isLikedByCurrentUser' in value &&
+    typeof value.isLikedByCurrentUser === 'boolean' &&
+    'likesCount' in value &&
+    typeof value.likesCount === 'number' &&
+    Number.isSafeInteger(value.likesCount) &&
+    value.likesCount >= 0
+  );
+}
+
+export async function toggleCommentLike(
+  commentId: string,
+  userEmail: string,
+  signal?: AbortSignal,
+): Promise<GameCommentLikeResult> {
+  const response = await postJson(
+    `comments/${encodeURIComponent(commentId)}/like`,
+    { userEmail },
+    signal,
+  );
+
+  if (
+    typeof response !== 'object' ||
+    !response ||
+    !('data' in response) ||
+    !isGameCommentLikeResult(response.data)
+  ) {
+    throw new Error('Invalid comment like response');
+  }
+
+  return response.data;
 }
