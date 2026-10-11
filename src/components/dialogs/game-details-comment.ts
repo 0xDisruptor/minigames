@@ -8,14 +8,15 @@ import { createEmptyState, createErrorState, createSkeleton } from '../feedback/
 import { showSnackbar } from '../snackbar/snackbar';
 import { createGameCommentForm } from './game-comment-form';
 import type { GameDetailsActions } from './game-details-info';
+import { createCommentAvatarPalette } from '../../utils/comment-avatar';
+import type { CommentAvatarTone } from '../../utils/comment-avatar';
+import { getCommentAuthorInitial } from '../../utils/comment-validation';
 
 interface GameDetailsComments {
   readonly element: HTMLElement;
   load: (gameSlug: string) => Promise<void>;
   reset: () => void;
 }
-
-const avatarTones = ['blue', 'yellow', 'lavender'] as const;
 
 function createAvatar(letter: string, tone: string): HTMLSpanElement {
   const avatar = document.createElement('span');
@@ -27,7 +28,7 @@ function createAvatar(letter: string, tone: string): HTMLSpanElement {
 
 function createCommentItem(
   comment: GameComment,
-  index: number,
+  tone: CommentAvatarTone,
   isAuthenticated: boolean,
 ): HTMLLIElement {
   const item = document.createElement('li');
@@ -40,8 +41,7 @@ function createCommentItem(
   const authorBlock = document.createElement('div');
   authorBlock.className = 'game-comments__author-block';
 
-  const tone = avatarTones[index % avatarTones.length] ?? 'blue';
-  const avatar = createAvatar(comment.authorName.charAt(0), tone);
+  const avatar = createAvatar(getCommentAuthorInitial(comment.authorName), tone);
 
   const author = document.createElement('strong');
   author.className = 'game-comments__author';
@@ -102,6 +102,7 @@ function createLoadingComments(): HTMLUListElement {
 }
 
 export function createGameDetailsComments(options: GameDetailsActions = {}): GameDetailsComments {
+  const avatarPalette = createCommentAvatarPalette();
   const section = document.createElement('section');
   section.className = 'game-comments';
   section.setAttribute('aria-labelledby', 'game-comments-title');
@@ -244,8 +245,10 @@ export function createGameDetailsComments(options: GameDetailsActions = {}): Gam
         const list = document.createElement('ul');
         list.className = 'game-comments__list';
 
-        for (const [index, comment] of response.data.entries()) {
-          list.append(createCommentItem(comment, index, Boolean(session)));
+        for (const comment of response.data) {
+          list.append(
+            createCommentItem(comment, avatarPalette.getTone(comment.authorName), Boolean(session)),
+          );
         }
 
         results.replaceChildren(list);
@@ -282,6 +285,7 @@ export function createGameDetailsComments(options: GameDetailsActions = {}): Gam
   function reset(): void {
     request?.abort();
     request = undefined;
+    avatarPalette.reset();
 
     unsubscribe?.();
     unsubscribe = undefined;

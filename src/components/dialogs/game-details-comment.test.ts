@@ -140,9 +140,83 @@ afterEach(() => {
 
   mountedComments.length = 0;
   document.body.replaceChildren();
+  vi.restoreAllMocks();
 });
 
 describe('game details comment submission', () => {
+  it('renders the uppercase initial of the trimmed commenter name', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.8);
+
+    mocks.getGameComments.mockResolvedValueOnce(
+      createResponse([{ ...comment, authorName: '  émilie  ' }], 1),
+    );
+
+    const { comments } = await createFixture();
+
+    const avatar = comments.element.querySelector('.game-comments__avatar--random-5');
+
+    expect(avatar?.textContent).toBe('É');
+  });
+
+  it('preserves author colors when comments are refreshed and reordered', async () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    const { comments } = await createFixture();
+
+    const originalAvatar = comments.element.querySelector('.game-comments__avatar--random-1');
+
+    expect(originalAvatar).toBeTruthy();
+
+    random.mockReturnValue(0.8);
+
+    mocks.getGameComments.mockResolvedValueOnce(
+      createResponse(
+        [
+          {
+            ...comment,
+            commentId: 'taylor-comment',
+            authorName: 'Taylor',
+          },
+          {
+            ...comment,
+            commentId: 'another-alex-comment',
+            text: 'Another comment by Alex.',
+          },
+          comment,
+        ],
+        12,
+      ),
+    );
+
+    await comments.load('chess');
+
+    const avatars = [...comments.element.querySelectorAll('.game-comments__item')].map((item) =>
+      item.querySelector('.game-comments__avatar'),
+    );
+
+    expect(avatars[0]?.classList.contains('game-comments__avatar--random-5')).toBe(true);
+    expect(avatars[1]?.classList.contains('game-comments__avatar--random-1')).toBe(true);
+    expect(avatars[2]?.classList.contains('game-comments__avatar--random-1')).toBe(true);
+
+    expect(avatars[2]).not.toBe(originalAvatar);
+    expect(random).toHaveBeenCalledTimes(2);
+  });
+
+  it('can select a new avatar color after resetting and reopening comments', async () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    const { comments } = await createFixture();
+
+    expect(comments.element.querySelector('.game-comments__avatar--random-1')).toBeTruthy();
+
+    comments.reset();
+    random.mockReturnValue(0.8);
+
+    await comments.load('chess');
+
+    expect(comments.element.querySelector('.game-comments__avatar--random-5')).toBeTruthy();
+    expect(comments.element.querySelector('.game-comments__avatar--random-1')).toBeNull();
+    expect(random).toHaveBeenCalledTimes(2);
+  });
+
   it('loads personalized comments using the active session email', async () => {
     const { comments, textarea } = await createFixture();
 
