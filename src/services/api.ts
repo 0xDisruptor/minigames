@@ -533,3 +533,45 @@ export async function createGameComment(
 
   return response.data;
 }
+
+export interface GameCommentLikeResult {
+  readonly isLikedByCurrentUser: boolean;
+  readonly likesCount: number;
+}
+
+function isGameCommentLikeResult(value: unknown): value is GameCommentLikeResult {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    'isLikedByCurrentUser' in value &&
+    typeof value.isLikedByCurrentUser === 'boolean' &&
+    'likesCount' in value &&
+    typeof value.likesCount === 'number' &&
+    Number.isSafeInteger(value.likesCount) &&
+    value.likesCount >= 0
+  );
+}
+
+export async function toggleCommentLike(
+  commentId: string,
+  userEmail: string,
+  signal?: AbortSignal,
+): Promise<GameCommentLikeResult> {
+  const response = await postJson(
+    `comments/${encodeURIComponent(commentId)}/like`,
+    { userEmail },
+    signal,
+  );
+
+  if (
+    typeof response !== 'object' ||
+    !response ||
+    !('data' in response) ||
+    !isGameCommentLikeResult(response.data)
+  ) {
+    throw new Error('Invalid comment like response');
+  }
+
+  return response.data;
+}
