@@ -183,6 +183,8 @@
     font-size: tokens.$body-small;
     font-weight: tokens.$regular;
     line-height: 1.3;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
   }
 
   &__like {
