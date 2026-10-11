@@ -116,6 +116,7 @@ describe('createLoginForm', () => {
 
     await vi.waitFor(() => {
       expect(fixture.onAuthenticated).toHaveBeenCalledExactlyOnceWith(mockUser);
+      expect(fixture.form.getAttribute('aria-busy')).toBe('false');
     });
 
     expect(authMocks.loginWithEmail).toHaveBeenCalledExactlyOnceWith({
@@ -176,6 +177,7 @@ describe('createLoginForm', () => {
 
     await vi.waitFor(() => {
       expect(fixture.onAuthenticated).toHaveBeenCalledExactlyOnceWith(mockUser);
+      expect(fixture.form.getAttribute('aria-busy')).toBe('false');
     });
 
     expect(fixture.email.disabled).toBe(false);
@@ -215,6 +217,7 @@ describe('createLoginForm', () => {
 
     await vi.waitFor(() => {
       expect(fixture.onAuthenticated).toHaveBeenCalledExactlyOnceWith(mockUser);
+      expect(fixture.form.getAttribute('aria-busy')).toBe('false');
     });
 
     expect(authMocks.loginWithEmail).toHaveBeenCalledTimes(2);

@@ -15,7 +15,9 @@ import eyeIconUrl from '../../assets/icons/auth-eye.svg';
 import googleIconUrl from '../../assets/icons/google.svg';
 
 export interface LoginFormCallbacks {
-  readonly onAuthenticated?: (user: User) => void;
+  readonly onBeforeAuthenticate?: () => void | Promise<void>;
+  readonly onAuthenticated?: (user: User) => void | Promise<void>;
+  readonly onAuthenticationComplete?: () => void;
   readonly onPendingChange?: (isPending: boolean) => void;
 }
 
@@ -181,11 +183,15 @@ export function createLoginForm(
     pending.setPending(true);
     submit.textContent = 'Signing in…';
 
-    let user: User;
-
     try {
       callbacks.onPendingChange?.(true);
-      user = await loginWithEmail(credentials);
+
+      if (callbacks.onBeforeAuthenticate) {
+        await callbacks.onBeforeAuthenticate();
+      }
+
+      const user = await loginWithEmail(credentials);
+      await callbacks.onAuthenticated?.(user);
     } catch (error: unknown) {
       showSnackbar(getAuthErrorMessage(error), 'error');
       return;
@@ -196,7 +202,7 @@ export function createLoginForm(
     }
 
     form.reset();
-    callbacks.onAuthenticated?.(user);
+    callbacks.onAuthenticationComplete?.();
     showSnackbar('Signed in successfully.', 'success');
   }
 

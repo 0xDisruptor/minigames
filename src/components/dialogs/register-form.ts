@@ -77,7 +77,9 @@ export function createAuthField(options: AuthFieldOptions): HTMLDivElement {
 }
 
 export interface RegistrationFormCallbacks {
-  readonly onAuthenticated?: (user: User) => void;
+  readonly onBeforeAuthenticate?: () => void | Promise<void>;
+  readonly onAuthenticated?: (user: User) => void | Promise<void>;
+  readonly onAuthenticationComplete?: () => void;
   readonly onPendingChange?: (isPending: boolean) => void;
 }
 
@@ -233,11 +235,15 @@ export function createRegisterForm(
     pending.setPending(true);
     submit.textContent = 'Creating account…';
 
-    let user: User;
-
     try {
       callbacks.onPendingChange?.(true);
-      user = await registerWithEmail(credentials);
+
+      if (callbacks.onBeforeAuthenticate) {
+        await callbacks.onBeforeAuthenticate();
+      }
+
+      const user = await registerWithEmail(credentials);
+      await callbacks.onAuthenticated?.(user);
     } catch (error: unknown) {
       showSnackbar(getAuthErrorMessage(error), 'error');
       return;
@@ -248,7 +254,7 @@ export function createRegisterForm(
     }
 
     form.reset();
-    callbacks.onAuthenticated?.(user);
+    callbacks.onAuthenticationComplete?.();
     showSnackbar('Account created successfully.', 'success');
   }
 
