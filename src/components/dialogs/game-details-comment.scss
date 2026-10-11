@@ -208,6 +208,10 @@
     font-weight: tokens.$bold;
     cursor: pointer;
 
+    &:disabled {
+      cursor: default;
+    }
+
     @media (hover: hover) {
       &:hover {
         color: tokens.$like;
