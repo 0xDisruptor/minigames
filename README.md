@@ -34,3 +34,16 @@ The local configuration file is excluded from Git.
 
 Run unit tests with `npm test`.
 Generate the coverage report with `npm run test:coverage`.
+
+## App session
+
+The app session uses the localStorage key:
+
+`minigames:0xdisruptor-minigames:app-session`
+
+The session lifetime is 5 minutes from successful authentication.
+Reloading the page or using the app does not extend this lifetime.
+
+The session record contains displayName, email, authenticatedAt
+(a timestamp in milliseconds), and avatarUrl when available.
+Passwords and authentication tokens are not stored in this record.
