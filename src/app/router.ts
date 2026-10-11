@@ -2,8 +2,8 @@ import { createHomePage } from '../pages/home/home-page';
 import { createLibraryPage } from '../pages/library/library-page';
 import type { createAuthDialog } from '../components/dialogs/auth-dialog';
 import type { createGameDetailsDialog } from '../components/dialogs/game-details-dialog';
-import { NAVIGATION_EVENT, getRoutePath, navigate, readLibraryUrlState } from './navigation';
 import { createNotFoundPage } from '../pages/not-found/not-found-page';
+import { NAVIGATION_EVENT, getRoutePath, navigate, readLibraryUrlState } from './navigation';
 
 type Page = 'home' | 'library' | 'not-found';
 
@@ -17,6 +17,8 @@ interface RouterDialogs {
   readonly auth: ReturnType<typeof createAuthDialog>;
   readonly game: ReturnType<typeof createGameDetailsDialog>;
   readonly takeTrigger: () => HTMLElement | undefined;
+  readonly checkSession: () => void;
+  readonly canOpenAuth: () => boolean;
 }
 
 function getCurrentPage(): Page {
@@ -108,6 +110,15 @@ export function initRouter(root: HTMLElement, outlet: HTMLElement, dialogs: Rout
   }
 
   function synchronize(): void {
+    dialogs.checkSession();
+
+    const authMode = new URLSearchParams(location.search).get('auth');
+    const hasAuthRequest = authMode === 'login' || authMode === 'register';
+
+    if (hasAuthRequest && !dialogs.canOpenAuth()) {
+      return;
+    }
+
     renderPage();
     renderDialogs();
   }
@@ -143,6 +154,7 @@ export function initRouter(root: HTMLElement, outlet: HTMLElement, dialogs: Rout
     }
 
     event.preventDefault();
+    dialogs.checkSession();
     navigate(url);
   });
 

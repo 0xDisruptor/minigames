@@ -10,6 +10,7 @@ import { createGameDetailsDialog } from '../components/dialogs/game-details-dial
 import { bindAppSessionLifecycle } from '../services/app-session-lifecycle';
 import { createAppSessionFromUser } from '../services/app-session-user';
 import type { AppSession } from '../state/app-session';
+import { canOpenAuthDialog } from './auth-dialog-guard';
 import { updateUrlQuery } from './navigation';
 import { initRouter } from './router';
 import { sessionController } from './session';
@@ -24,6 +25,10 @@ const dialogContext: { trigger?: HTMLElement } = {};
 
 const authDialog = createAuthDialog(
   (mode): void => {
+    if (!canOpenAuthDialog(sessionController)) {
+      return;
+    }
+
     updateUrlQuery({ auth: mode });
   },
   (): void => {
@@ -34,6 +39,7 @@ const authDialog = createAuthDialog(
       await sessionController.initialize();
       await sessionController.whenReady();
     },
+
     onAuthenticated: async (user): Promise<void> => {
       let session: AppSession;
 
@@ -55,7 +61,12 @@ const gameDetailsDialog = createGameDetailsDialog((): void => {
 
 const header = createHeader(
   (mode, trigger): void => {
+    if (!canOpenAuthDialog(sessionController)) {
+      return;
+    }
+
     dialogContext.trigger = trigger;
+
     updateUrlQuery({ auth: mode });
   },
   async (): Promise<void> => {
@@ -89,6 +100,8 @@ app.addEventListener('click', (event: MouseEvent): void => {
     return;
   }
 
+  sessionController.getActiveSession();
+
   dialogContext.trigger = trigger;
 
   updateUrlQuery({
@@ -99,6 +112,7 @@ app.addEventListener('click', (event: MouseEvent): void => {
 
 async function startApp(): Promise<void> {
   bindAppSessionLifecycle(sessionController);
+
   await sessionController.initialize();
 
   document.body.append(app);
@@ -106,6 +120,14 @@ async function startApp(): Promise<void> {
   initRouter(app, outlet, {
     auth: authDialog,
     game: gameDetailsDialog,
+
+    checkSession(): void {
+      sessionController.getActiveSession();
+    },
+
+    canOpenAuth(): boolean {
+      return canOpenAuthDialog(sessionController);
+    },
 
     takeTrigger(): HTMLElement | undefined {
       const trigger = dialogContext.trigger;
