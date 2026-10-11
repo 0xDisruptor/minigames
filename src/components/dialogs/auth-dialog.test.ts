@@ -2,9 +2,9 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createAuthDialog } from './auth-dialog';
-import type { AuthMode } from './auth-dialog';
 import type { LoginFormCallbacks } from './login-form';
 import type { RegistrationFormCallbacks } from './register-form';
+import type { AuthDialogCallbacks, AuthMode } from './auth-dialog';
 
 const formMocks = vi.hoisted(() => ({
   login: vi.fn<(onRegister: () => void, callbacks?: LoginFormCallbacks) => HTMLFormElement>(),
@@ -37,13 +37,17 @@ function createMockForm(onSwitch: () => void): HTMLFormElement {
   return form;
 }
 
-function createFixture(mode: AuthMode = 'login', shouldUseCallbacks = true) {
+function createFixture(
+  mode: AuthMode = 'login',
+  shouldUseCallbacks = true,
+  sessionCallbacks: AuthDialogCallbacks = {},
+) {
   const onModeChange = vi.fn();
   const onRequestClose = vi.fn();
 
   const authDialog = shouldUseCallbacks
-    ? createAuthDialog(onModeChange, onRequestClose)
-    : createAuthDialog();
+    ? createAuthDialog(onModeChange, onRequestClose, sessionCallbacks)
+    : createAuthDialog(undefined, undefined, sessionCallbacks);
 
   const element = authDialog.element;
   const cancelAnimation = vi.fn();
@@ -127,6 +131,7 @@ function createFixture(mode: AuthMode = 'login', shouldUseCallbacks = true) {
     cancelAnimation,
     onModeChange,
     onRequestClose,
+    callbacks,
   };
 }
 
@@ -160,6 +165,73 @@ afterEach(() => {
 });
 
 describe('createAuthDialog', () => {
+  it('forwards session callbacks to both forms', () => {
+    const onBeforeAuthenticate = vi.fn(() => Promise.resolve());
+    const onAuthenticated = vi.fn(() => Promise.resolve());
+
+    createFixture('login', true, {
+      onBeforeAuthenticate,
+      onAuthenticated,
+    });
+
+    const loginCallbacks = formMocks.login.mock.calls[0]?.[1];
+    const registrationCallbacks = formMocks.registration.mock.calls[0]?.[1];
+
+    for (const callbacks of [loginCallbacks, registrationCallbacks]) {
+      expect(callbacks?.onBeforeAuthenticate).toBe(onBeforeAuthenticate);
+      expect(callbacks?.onAuthenticated).toBe(onAuthenticated);
+      expect(callbacks?.onAuthenticationComplete).toEqual(expect.any(Function));
+    }
+  });
+
+  it.each<AuthMode>(['login', 'register'])(
+    'requests closing after %s authentication is unlocked',
+    (mode) => {
+      const fixture = createFixture(mode);
+      const onComplete = fixture.callbacks?.onAuthenticationComplete;
+
+      if (!onComplete) {
+        throw new Error('Authentication completion callback is missing.');
+      }
+
+      fixture.setPending(true);
+      onComplete();
+
+      expect(fixture.onRequestClose).not.toHaveBeenCalled();
+      expect(fixture.element.open).toBe(true);
+
+      fixture.setPending(false);
+      onComplete();
+
+      expect(fixture.onRequestClose).toHaveBeenCalledTimes(1);
+      expect(fixture.element.close).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each<AuthMode>(['login', 'register'])(
+    'closes after %s authentication without an external close callback',
+    (mode) => {
+      const fixture = createFixture(mode, false);
+      fixture.input.value = 'Temporary value';
+
+      const onComplete = fixture.callbacks?.onAuthenticationComplete;
+
+      if (!onComplete) {
+        throw new Error('Authentication completion callback is missing.');
+      }
+
+      fixture.setPending(true);
+      fixture.setPending(false);
+      onComplete();
+
+      expect(fixture.element.open).toBe(false);
+      expect(fixture.element.close).toHaveBeenCalledTimes(1);
+      expect(fixture.input.value).toBe('');
+      expect(document.activeElement).toBe(fixture.trigger);
+      expect(document.documentElement.classList.contains('has-open-auth')).toBe(false);
+    },
+  );
+
   it.each<AuthMode>(['login', 'register'])(
     'blocks closing and mode changes while %s is pending',
     (mode) => {
