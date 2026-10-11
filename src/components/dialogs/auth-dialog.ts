@@ -1,10 +1,16 @@
 import './auth-dialog.scss';
 import { createLoginForm } from './login-form';
 import { createRegisterForm } from './register-form';
+import type { LoginFormCallbacks } from './login-form';
 
 export type AuthMode = 'login' | 'register';
 
 export type OpenAuth = (mode: AuthMode, trigger?: HTMLElement) => void;
+
+export type AuthDialogCallbacks = Pick<
+  LoginFormCallbacks,
+  'onBeforeAuthenticate' | 'onAuthenticated'
+>;
 
 interface AuthDialog {
   readonly element: HTMLDialogElement;
@@ -21,6 +27,7 @@ function getAnimationDuration(): number {
 export function createAuthDialog(
   onModeChange?: (mode: AuthMode) => void,
   onRequestClose?: () => void,
+  callbacks: AuthDialogCallbacks = {},
 ): AuthDialog {
   const dialog = document.createElement('dialog');
   dialog.className = 'auth-dialog';
@@ -116,7 +123,9 @@ export function createAuthDialog(
       requestMode('register');
     },
     {
+      ...callbacks,
       onPendingChange: setPending,
+      onAuthenticationComplete: requestClose,
     },
   );
 
@@ -125,10 +134,11 @@ export function createAuthDialog(
       requestMode('login');
     },
     {
+      ...callbacks,
       onPendingChange: setPending,
+      onAuthenticationComplete: requestClose,
     },
   );
-
   panels.login.append(loginForm);
   panels.register.append(registerForm);
 
