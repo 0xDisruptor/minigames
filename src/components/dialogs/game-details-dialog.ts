@@ -47,6 +47,9 @@ export function createGameDetailsDialog(onRequestClose?: () => void) {
   let request: AbortController | undefined;
   let hasFailed = false;
   let wasPointerStartedOutside = false;
+  let isSuspended = false;
+  let suspendedScrollTop = 0;
+  let shouldReloadOnResume = false;
 
   function showState(title: string, state: HTMLElement): void {
     const heading = document.createElement('h2');
@@ -141,10 +144,48 @@ export function createGameDetailsDialog(onRequestClose?: () => void) {
     }
   }
 
+  function resetClosedState(): void {
+    request?.abort();
+    comments.reset();
+
+    request = undefined;
+    currentSlug = undefined;
+    isSuspended = false;
+    suspendedScrollTop = 0;
+    shouldReloadOnResume = false;
+    wasPointerStartedOutside = false;
+
+    if (opener?.isConnected) {
+      opener.focus({ preventScroll: true });
+    }
+
+    opener = undefined;
+  }
+
   function close(): void {
+    if (isSuspended) {
+      dismissSnackbar();
+      resetClosedState();
+      return;
+    }
+
     if (!dialog.open) {
       return;
     }
+
+    request?.abort();
+    dismissSnackbar();
+    dialog.close();
+  }
+
+  function suspend(): void {
+    if (!dialog.open) {
+      return;
+    }
+
+    isSuspended = true;
+    suspendedScrollTop = dialog.scrollTop;
+    shouldReloadOnResume = content.getAttribute('aria-busy') === 'true';
 
     request?.abort();
     dismissSnackbar();
@@ -164,6 +205,30 @@ export function createGameDetailsDialog(onRequestClose?: () => void) {
     if (!slug || (currentSlug === slug && dialog.open)) {
       return;
     }
+
+    if (isSuspended && currentSlug === slug) {
+      const scrollTop = suspendedScrollTop;
+      const shouldReload = shouldReloadOnResume;
+
+      isSuspended = false;
+      suspendedScrollTop = 0;
+      shouldReloadOnResume = false;
+      opener = trigger ?? opener;
+
+      dismissSnackbar();
+      dialog.showModal();
+      dialog.scrollTop = scrollTop;
+
+      if (shouldReload) {
+        void loadGame();
+      }
+
+      return;
+    }
+
+    isSuspended = false;
+    suspendedScrollTop = 0;
+    shouldReloadOnResume = false;
 
     opener = trigger ?? (dialog.open ? opener : undefined);
     currentSlug = slug;
@@ -218,21 +283,12 @@ export function createGameDetailsDialog(onRequestClose?: () => void) {
   });
 
   dialog.addEventListener('close', (): void => {
-    if (dialog.open) {
+    if (isSuspended || dialog.open) {
       return;
     }
-    request?.abort();
-    comments.reset();
-    request = undefined;
-    currentSlug = undefined;
-    wasPointerStartedOutside = false;
 
-    if (opener?.isConnected) {
-      opener.focus({ preventScroll: true });
-    }
-
-    opener = undefined;
+    resetClosedState();
   });
 
-  return { element: dialog, open, openBySlug, close };
+  return { element: dialog, open, openBySlug, close, suspend };
 }

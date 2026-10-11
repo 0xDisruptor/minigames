@@ -115,6 +115,7 @@ describe.each([
 
     await vi.waitFor(() => {
       expect(fixture.onAuthenticated).toHaveBeenCalledExactlyOnceWith(mockUser);
+      expect(fixture.form.getAttribute('aria-busy')).toBe('false');
     });
 
     expect(authMocks.loginWithGoogle).toHaveBeenCalledExactlyOnceWith();
@@ -178,6 +179,7 @@ describe.each([
 
     await vi.waitFor(() => {
       expect(fixture.onAuthenticated).toHaveBeenCalledExactlyOnceWith(mockUser);
+      expect(fixture.form.getAttribute('aria-busy')).toBe('false');
     });
 
     expect(fixture.google.disabled).toBe(false);
@@ -228,6 +230,7 @@ describe.each([
 
     await vi.waitFor(() => {
       expect(fixture.onAuthenticated).toHaveBeenCalledExactlyOnceWith(mockUser);
+      expect(fixture.form.getAttribute('aria-busy')).toBe('false');
     });
 
     expect(authMocks.loginWithGoogle).toHaveBeenCalledTimes(2);

@@ -10,7 +10,9 @@ interface GoogleAuthOptions {
   readonly label: HTMLSpanElement;
   readonly pending: AuthFormPending;
   readonly callbacks: {
-    readonly onAuthenticated?: (user: User) => void;
+    readonly onBeforeAuthenticate?: () => void | Promise<void>;
+    readonly onAuthenticated?: (user: User) => void | Promise<void>;
+    readonly onAuthenticationComplete?: () => void;
     readonly onPendingChange?: (isPending: boolean) => void;
   };
 }
@@ -32,11 +34,15 @@ export function bindGoogleAuth({
     pending.setPending(true);
     label.textContent = 'Connecting to Google…';
 
-    let user: User;
-
     try {
       callbacks.onPendingChange?.(true);
-      user = await loginWithGoogle();
+
+      if (callbacks.onBeforeAuthenticate) {
+        await callbacks.onBeforeAuthenticate();
+      }
+
+      const user = await loginWithGoogle();
+      await callbacks.onAuthenticated?.(user);
     } catch (error: unknown) {
       showSnackbar(getAuthErrorMessage(error), 'error');
       return;
@@ -47,7 +53,7 @@ export function bindGoogleAuth({
     }
 
     form.reset();
-    callbacks.onAuthenticated?.(user);
+    callbacks.onAuthenticationComplete?.();
     showSnackbar('Signed in successfully.', 'success');
   }
 

@@ -143,6 +143,7 @@ describe('createRegisterForm', () => {
 
     await vi.waitFor(() => {
       expect(fixture.onAuthenticated).toHaveBeenCalledExactlyOnceWith(mockUser);
+      expect(fixture.form.getAttribute('aria-busy')).toBe('false');
     });
 
     expect(authMocks.registerWithEmail).toHaveBeenCalledExactlyOnceWith({
@@ -208,8 +209,8 @@ describe('createRegisterForm', () => {
 
     await vi.waitFor(() => {
       expect(fixture.onAuthenticated).toHaveBeenCalledExactlyOnceWith(mockUser);
+      expect(fixture.form.getAttribute('aria-busy')).toBe('false');
     });
-
     expect(fixture.confirmation.disabled).toBe(false);
     expect(fixture.google.disabled).toBe(false);
   });
@@ -250,6 +251,7 @@ describe('createRegisterForm', () => {
 
     await vi.waitFor(() => {
       expect(fixture.onAuthenticated).toHaveBeenCalledExactlyOnceWith(mockUser);
+      expect(fixture.form.getAttribute('aria-busy')).toBe('false');
     });
 
     expect(authMocks.registerWithEmail).toHaveBeenCalledTimes(2);
