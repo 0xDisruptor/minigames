@@ -212,6 +212,7 @@ describe('router auth guard', () => {
     const page = fixture.outlet.firstElementChild;
 
     navigate('/minigames/library?game=chess&auth=login#details');
+    expect(fixture.game.suspend).toHaveBeenCalledTimes(1);
 
     expect(fixture.auth.open).toHaveBeenCalledWith('login', undefined);
     expect(fixture.outlet.firstElementChild).toBe(page);
