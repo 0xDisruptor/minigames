@@ -196,6 +196,7 @@ export function createGameDetailsDialog(
 
     request?.abort();
     contentController?.abort();
+    comments.reset();
     dismissSnackbar();
     dialog.close();
   }
