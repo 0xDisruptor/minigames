@@ -97,6 +97,8 @@ describe('createHeader', () => {
     expect(headerMocks.createMobileMenu).toHaveBeenCalledExactlyOnceWith(
       fixture.menuButton,
       fixture.onAuth,
+      fixture.onLogout,
+      fixture.store,
     );
   });
 

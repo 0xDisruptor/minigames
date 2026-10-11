@@ -133,7 +133,7 @@ export function createHeader(
   actions.append(loginButton, signupButton, profileContainer, logoutButton, menuButton);
   container.append(logo, navigation, actions);
 
-  const mobileMenu = createMobileMenu(menuButton, onAuth);
+  const mobileMenu = createMobileMenu(menuButton, onAuth, onLogout, store);
   header.append(container, mobileMenu);
 
   function renderSession(session: AppSession | undefined): void {
@@ -153,9 +153,14 @@ export function createHeader(
 
   const unsubscribe = store.subscribe(renderSession);
 
-  header.addEventListener('header-dispose', unsubscribe, {
-    once: true,
-  });
+  header.addEventListener(
+    'header-dispose',
+    (): void => {
+      unsubscribe();
+      mobileMenu.dispatchEvent(new Event('menu-dispose'));
+    },
+    { once: true },
+  );
 
   return header;
 }
