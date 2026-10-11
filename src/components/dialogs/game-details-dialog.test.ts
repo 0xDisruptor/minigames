@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '../../services/api';
 import type { GameDetails } from '../../services/api';
 import { createGameDetailsDialog } from './game-details-dialog';
+import { updateUrlQuery } from '../../app/navigation';
 
 const mocks = vi.hoisted(() => ({
   getGameDetails: vi.fn<(slug: string, signal?: AbortSignal) => Promise<GameDetails | undefined>>(),
@@ -65,12 +66,12 @@ const chess: GameDetails = {
 
 const dialogs: Array<ReturnType<typeof createGameDetailsDialog>> = [];
 
-function createFixture() {
+function createFixture(onRequestClose?: () => void) {
   const trigger = document.createElement('button');
   trigger.type = 'button';
   trigger.dataset.gameId = 'chess';
 
-  const dialog = createGameDetailsDialog();
+  const dialog = createGameDetailsDialog(onRequestClose);
   const element = dialog.element;
 
   const showNative = vi.fn((): void => {
@@ -399,5 +400,74 @@ describe('game details dialog suspension', () => {
 
     expect(fixture.content.querySelector('h2')?.textContent).toBe('Game Not Found');
     expect(mocks.showSnackbar).toHaveBeenCalledWith('Game not found.', 'error');
+  });
+
+  it('closes through the router callback when the backdrop is clicked', async () => {
+    history.replaceState({}, '', '/minigames/library?game=chess&category=puzzle#details');
+
+    const onRequestClose = vi.fn((): void => {
+      updateUrlQuery({ game: undefined });
+      fixture.dialog.close();
+    });
+
+    const fixture = createFixture(onRequestClose);
+
+    await openLoaded(fixture);
+
+    vi.spyOn(fixture.element, 'getBoundingClientRect').mockReturnValue(
+      new DOMRect(100, 100, 600, 400),
+    );
+
+    fixture.element.dispatchEvent(
+      new MouseEvent('pointerdown', {
+        clientX: 10,
+        clientY: 10,
+      }),
+    );
+
+    fixture.element.dispatchEvent(
+      new MouseEvent('click', {
+        clientX: 10,
+        clientY: 10,
+      }),
+    );
+
+    const url = new URL(location.href);
+
+    expect(onRequestClose).toHaveBeenCalledTimes(1);
+    expect(fixture.element.open).toBe(false);
+    expect(url.searchParams.has('game')).toBe(false);
+    expect(url.searchParams.get('category')).toBe('puzzle');
+    expect(url.hash).toBe('#details');
+  });
+
+  it('does not close when a pointer starts inside the content', async () => {
+    const onRequestClose = vi.fn();
+    const fixture = createFixture(onRequestClose);
+
+    await openLoaded(fixture);
+
+    vi.spyOn(fixture.element, 'getBoundingClientRect').mockReturnValue(
+      new DOMRect(100, 100, 600, 400),
+    );
+
+    fixture.content.dispatchEvent(
+      new MouseEvent('pointerdown', {
+        bubbles: true,
+        clientX: 150,
+        clientY: 150,
+      }),
+    );
+
+    fixture.element.dispatchEvent(
+      new MouseEvent('click', {
+        clientX: 10,
+        clientY: 10,
+      }),
+    );
+
+    expect(onRequestClose).not.toHaveBeenCalled();
+    expect(fixture.closeNative).not.toHaveBeenCalled();
+    expect(fixture.element.open).toBe(true);
   });
 });
