@@ -18,7 +18,7 @@ const session: AppSession = {
 
 function createDeferredSubmission() {
   const callbacks: {
-    resolve?: (value: boolean) => void;
+    resolve?: (wasSubmitted: boolean) => void;
     reject?: (reason: unknown) => void;
   } = {};
 
@@ -36,7 +36,7 @@ function createFixture(isGuest = false) {
   };
 
   const getActiveSession = vi.fn(() => state.session);
-  const requireSession = vi.fn((_trigger?: HTMLElement) => state.session);
+  const requireSession = vi.fn(() => state.session);
 
   const onSubmit = vi
     .fn<
