@@ -45,16 +45,24 @@
       font-weight: tokens.$bold;
     }
 
-    &--blue {
+    &--random-1 {
+      background-color: tokens.$avatar-random-1;
+    }
+
+    &--random-2 {
+      background-color: tokens.$avatar-random-2;
+    }
+
+    &--random-3 {
       background-color: tokens.$avatar-random-3;
     }
 
-    &--yellow {
-      background-color: tokens.$primary-low;
+    &--random-4 {
+      background-color: tokens.$avatar-random-4;
     }
 
-    &--lavender {
-      background-color: tokens.$secondary;
+    &--random-5 {
+      background-color: tokens.$avatar-random-5;
     }
   }
 
