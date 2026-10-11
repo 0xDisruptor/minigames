@@ -8,8 +8,12 @@ import { dismissSnackbar, showSnackbar } from '../snackbar/snackbar';
 import { createGameDetailsInfo } from './game-details-info';
 import { createGameDetailsRecords } from './game-details-records';
 import { createGameDetailsComments } from './game-details-comment';
+import type { GameDetailsActions } from './game-details-info';
 
-export function createGameDetailsDialog(onRequestClose?: () => void) {
+export function createGameDetailsDialog(
+  onRequestClose?: () => void,
+  options: GameDetailsActions = {},
+) {
   const dialog = document.createElement('dialog');
   dialog.className = 'game-dialog';
   dialog.setAttribute('aria-labelledby', 'game-dialog-title');
@@ -45,6 +49,7 @@ export function createGameDetailsDialog(onRequestClose?: () => void) {
   let opener: HTMLElement | undefined;
   let currentSlug: string | undefined;
   let request: AbortController | undefined;
+  let contentController: AbortController | undefined;
   let hasFailed = false;
   let wasPointerStartedOutside = false;
   let isSuspended = false;
@@ -73,6 +78,8 @@ export function createGameDetailsDialog(onRequestClose?: () => void) {
     }
 
     request?.abort();
+    contentController?.abort();
+    contentController = undefined;
     comments.reset();
 
     const controller = new AbortController();
@@ -83,7 +90,9 @@ export function createGameDetailsDialog(onRequestClose?: () => void) {
     showState('Game details', createSkeleton('Loading game details'));
 
     try {
-      const game = await getGameDetails(slug, controller.signal);
+      const loadedSession = options.getActiveSession?.();
+
+      const game = await getGameDetails(slug, controller.signal, loadedSession?.email);
 
       if (!dialog.open || controller.signal.aborted) {
         return;
@@ -102,8 +111,18 @@ export function createGameDetailsDialog(onRequestClose?: () => void) {
       cover.height = 220;
 
       media.replaceChildren(cover);
+      const actionsController = new AbortController();
+      contentController = actionsController;
+
       content.replaceChildren(
-        createGameDetailsInfo(game),
+        createGameDetailsInfo(
+          game,
+          {
+            ...options,
+            ...(loadedSession && { loadedSession }),
+          },
+          actionsController.signal,
+        ),
         createGameDetailsRecords(game.topRecords),
         comments.element,
       );
@@ -146,6 +165,8 @@ export function createGameDetailsDialog(onRequestClose?: () => void) {
 
   function resetClosedState(): void {
     request?.abort();
+    contentController?.abort();
+    contentController = undefined;
     comments.reset();
 
     request = undefined;
@@ -174,6 +195,7 @@ export function createGameDetailsDialog(onRequestClose?: () => void) {
     }
 
     request?.abort();
+    contentController?.abort();
     dismissSnackbar();
     dialog.close();
   }
