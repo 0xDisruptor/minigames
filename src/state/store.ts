@@ -1,9 +1,7 @@
 import { isAppSession } from './app-session';
 import type { AppSession } from './app-session';
 
-export type AppSessionListener = (
-  session: AppSession | undefined,
-) => void;
+export type AppSessionListener = (session: AppSession | undefined) => void;
 
 export interface AppSessionStore {
   readonly getSession: () => AppSession | undefined;
@@ -38,8 +36,8 @@ export function createAppSessionStore(): AppSessionStore {
       });
 
     for (const listener of listeners) {
-  listener(currentSession);
-}
+      listener(currentSession);
+    }
   }
 
   function subscribe(listener: AppSessionListener): () => void {
