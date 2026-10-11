@@ -14,6 +14,7 @@ import { canOpenAuthDialog } from './auth-dialog-guard';
 import { updateUrlQuery } from './navigation';
 import { initRouter } from './router';
 import { sessionController } from './session';
+import { createProtectedActionGuard } from './protected-action-guard';
 
 const app = document.createElement('div');
 app.id = 'app';
@@ -55,9 +56,20 @@ const authDialog = createAuthDialog(
   },
 );
 
-const gameDetailsDialog = createGameDetailsDialog((): void => {
-  updateUrlQuery({ game: undefined });
+const requireSession = createProtectedActionGuard(sessionController, (trigger): void => {
+  dialogContext.trigger = trigger;
+  updateUrlQuery({ auth: 'login' });
 });
+
+const gameDetailsDialog = createGameDetailsDialog(
+  (): void => {
+    updateUrlQuery({ game: undefined });
+  },
+  {
+    requireSession,
+    getActiveSession: sessionController.getActiveSession,
+  },
+);
 
 const header = createHeader(
   (mode, trigger): void => {

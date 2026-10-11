@@ -1,6 +1,15 @@
 import starUrl from '../../assets/icons/star.svg';
 import heartUrl from '../../assets/icons/heart.svg';
+import type { ProtectedActionGuard } from '../../app/protected-action-guard';
+import { toggleGameFavorite } from '../../services/api';
 import type { GameDetails } from '../../services/api';
+import type { AppSession } from '../../state/app-session';
+import { showSnackbar } from '../snackbar/snackbar';
+
+export interface GameDetailsActions {
+  readonly requireSession?: ProtectedActionGuard;
+  readonly getActiveSession?: () => AppSession | undefined;
+}
 
 function createMetric(iconUrl: string, text: string, label: string): HTMLSpanElement {
   const metric = document.createElement('span');
@@ -20,7 +29,11 @@ function createMetric(iconUrl: string, text: string, label: string): HTMLSpanEle
   return metric;
 }
 
-export function createGameDetailsInfo(game: GameDetails): HTMLElement {
+export function createGameDetailsInfo(
+  game: GameDetails,
+  options: GameDetailsActions = {},
+  signal?: AbortSignal,
+): HTMLElement {
   const element = document.createElement('div');
   element.className = 'game-dialog__info';
 
@@ -35,14 +48,20 @@ export function createGameDetailsInfo(game: GameDetails): HTMLElement {
   const metrics = document.createElement('div');
   metrics.className = 'game-dialog__metrics';
 
-  const likes = new Intl.NumberFormat('en', {
+  const likesFormatter = new Intl.NumberFormat('en', {
     notation: 'compact',
     maximumFractionDigits: 1,
-  }).format(game.likesCount);
+  });
+
+  const likesMetric = createMetric(
+    heartUrl,
+    likesFormatter.format(game.likesCount),
+    `${game.likesCount} likes`,
+  );
 
   metrics.append(
     createMetric(starUrl, game.rating.toFixed(1), `Rating: ${game.rating} out of 5`),
-    createMetric(heartUrl, likes, `${game.likesCount} likes`),
+    likesMetric,
   );
 
   heading.append(title, metrics);
@@ -86,21 +105,80 @@ export function createGameDetailsInfo(game: GameDetails): HTMLElement {
   const favoriteButton = document.createElement('button');
   favoriteButton.type = 'button';
   favoriteButton.className = 'game-dialog__action game-dialog__action--favorite';
-  favoriteButton.disabled = true;
-  favoriteButton.setAttribute('aria-pressed', String(game.isLikedByCurrentUser));
-
-  const favoriteLabel = game.isLikedByCurrentUser ? 'In Favorites' : 'Add to Favorites';
-
-  favoriteButton.setAttribute('aria-label', favoriteLabel);
 
   const favoriteIcon = document.createElement('span');
   favoriteIcon.className = 'game-dialog__favorite-icon';
-  favoriteIcon.textContent = game.isLikedByCurrentUser ? '♥' : '♡';
   favoriteIcon.setAttribute('aria-hidden', 'true');
 
   const favoriteText = document.createElement('span');
   favoriteText.className = 'game-dialog__favorite-text';
-  favoriteText.textContent = favoriteLabel;
+
+  const canToggleFavorite = Boolean(options.requireSession && options.getActiveSession);
+
+  let isFavorited = Boolean(options.getActiveSession?.() && game.isLikedByCurrentUser);
+  let likesCount = game.likesCount;
+  let isPending = false;
+
+  function renderFavorite(): void {
+    const label = isFavorited ? 'In Favorites' : 'Add to Favorites';
+
+    favoriteButton.disabled = !canToggleFavorite || isPending || Boolean(signal?.aborted);
+
+    favoriteButton.setAttribute('aria-pressed', String(isFavorited));
+    favoriteButton.setAttribute('aria-busy', String(isPending));
+    favoriteButton.setAttribute('aria-label', label);
+
+    favoriteIcon.textContent = isFavorited ? '♥' : '♡';
+    favoriteText.textContent = isPending ? 'Saving…' : label;
+
+    likesMetric.setAttribute('aria-label', `${likesCount} likes`);
+    likesMetric.lastElementChild?.replaceChildren(likesFormatter.format(likesCount));
+  }
+
+  async function toggleFavorite(): Promise<void> {
+    if (isPending || signal?.aborted || !options.requireSession || !options.getActiveSession) {
+      return;
+    }
+
+    const session = options.requireSession(favoriteButton);
+
+    if (!session) {
+      return;
+    }
+
+    isPending = true;
+    renderFavorite();
+
+    function canApplyResult(): boolean {
+      return !signal?.aborted && options.getActiveSession?.() === session;
+    }
+
+    try {
+      const result = await toggleGameFavorite(game.slug, session.email, signal);
+
+      if (!canApplyResult()) {
+        return;
+      }
+
+      isFavorited = result.isFavorited;
+      likesCount = result.likesCount;
+
+      showSnackbar(isFavorited ? 'Added to favorites.' : 'Removed from favorites.', 'success');
+    } catch {
+      if (canApplyResult()) {
+        showSnackbar('Could not update favorites. Please try again.', 'error');
+      }
+    } finally {
+      isPending = false;
+      renderFavorite();
+    }
+  }
+
+  favoriteButton.addEventListener('click', (): void => {
+    void toggleFavorite();
+  });
+
+  renderFavorite();
 
   favoriteButton.append(favoriteIcon, favoriteText);
   actions.append(playButton, favoriteButton);
