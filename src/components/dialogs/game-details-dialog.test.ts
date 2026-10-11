@@ -470,4 +470,22 @@ describe('game details dialog suspension', () => {
     expect(fixture.closeNative).not.toHaveBeenCalled();
     expect(fixture.element.open).toBe(true);
   });
+
+  it('resets comments before the browser dispatches the close event', async () => {
+    const fixture = createFixture();
+
+    await openLoaded(fixture);
+
+    const resetCount = mocks.resetComments.mock.calls.length;
+
+    fixture.closeNative.mockImplementationOnce((): void => {
+      fixture.element.open = false;
+    });
+
+    fixture.dialog.close();
+
+    expect(mocks.resetComments).toHaveBeenCalledTimes(resetCount + 1);
+
+    fixture.element.dispatchEvent(new Event('close'));
+  });
 });

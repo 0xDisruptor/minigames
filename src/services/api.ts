@@ -460,11 +460,16 @@ function isGameComment(value: unknown): value is GameComment {
 export async function getGameComments(
   gameSlug: string,
   signal?: AbortSignal,
+  userEmail?: string,
 ): Promise<GameCommentsResponse> {
   const parameters = new URLSearchParams({
     limit: '3',
     sort: 'newest',
   });
+
+  if (userEmail) {
+    parameters.set('userEmail', userEmail);
+  }
 
   const response = await getJson(
     `games/${encodeURIComponent(gameSlug)}/comments?${parameters.toString()}`,
@@ -494,4 +499,37 @@ export async function getGameComments(
       totalComments: response.meta.totalComments,
     },
   };
+}
+
+export interface CreateGameCommentInput {
+  readonly userEmail: string;
+  readonly authorName: string;
+  readonly text: string;
+}
+
+export async function createGameComment(
+  gameSlug: string,
+  input: CreateGameCommentInput,
+  signal?: AbortSignal,
+): Promise<GameComment> {
+  const response = await postJson(
+    `games/${encodeURIComponent(gameSlug)}/comments`,
+    {
+      userEmail: input.userEmail,
+      authorName: input.authorName,
+      text: input.text,
+    },
+    signal,
+  );
+
+  if (
+    typeof response !== 'object' ||
+    !response ||
+    !('data' in response) ||
+    !isGameComment(response.data)
+  ) {
+    throw new Error('Invalid comment submission response');
+  }
+
+  return response.data;
 }

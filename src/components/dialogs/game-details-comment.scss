@@ -76,6 +76,8 @@
     font-size: tokens.$body-small;
     font-weight: tokens.$regular;
     line-height: 1.4;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
 
     &::placeholder {
       color: tokens.$on-bg;
@@ -221,5 +223,21 @@
 
   &__likes-count {
     line-height: 1;
+  }
+
+  &__form-feedback {
+    grid-column: 2;
+    color: tokens.$on-primary;
+    font-size: tokens.$label-medium;
+    overflow-wrap: anywhere;
+
+    &[hidden] {
+      display: none;
+    }
+  }
+
+  &__submit:disabled {
+    cursor: default;
+    background-color: tokens.$on-bg;
   }
 }
