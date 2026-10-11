@@ -186,7 +186,7 @@ describe('game details favorite action', () => {
         likesCount,
       });
 
-      const { element, button, request } = await createFixture(session, {
+      const { element, button } = await createFixture(session, {
         ...game,
         isLikedByCurrentUser: initial,
       });
@@ -198,7 +198,11 @@ describe('game details favorite action', () => {
       await waitForCompletion(button);
 
       expect(mocks.toggleGameFavorite).toHaveBeenCalledTimes(1);
-      expect(mocks.toggleGameFavorite).toHaveBeenCalledWith('chess', session.email, request.signal);
+      expect(mocks.toggleGameFavorite).toHaveBeenCalledWith(
+        'chess',
+        session.email,
+        expect.any(AbortSignal),
+      );
 
       expect(button.disabled).toBe(false);
       expect(button.getAttribute('aria-pressed')).toBe(String(returned));

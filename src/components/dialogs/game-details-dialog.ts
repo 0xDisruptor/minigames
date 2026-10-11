@@ -90,11 +90,9 @@ export function createGameDetailsDialog(
     showState('Game details', createSkeleton('Loading game details'));
 
     try {
-      const game = await getGameDetails(
-        slug,
-        controller.signal,
-        options.getActiveSession?.()?.email,
-      );
+      const loadedSession = options.getActiveSession?.();
+
+      const game = await getGameDetails(slug, controller.signal, loadedSession?.email);
 
       if (!dialog.open || controller.signal.aborted) {
         return;
@@ -117,7 +115,14 @@ export function createGameDetailsDialog(
       contentController = actionsController;
 
       content.replaceChildren(
-        createGameDetailsInfo(game, options, actionsController.signal),
+        createGameDetailsInfo(
+          game,
+          {
+            ...options,
+            ...(loadedSession && { loadedSession }),
+          },
+          actionsController.signal,
+        ),
         createGameDetailsRecords(game.topRecords),
         comments.element,
       );

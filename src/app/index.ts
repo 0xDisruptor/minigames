@@ -15,6 +15,7 @@ import { updateUrlQuery } from './navigation';
 import { initRouter } from './router';
 import { sessionController } from './session';
 import { createProtectedActionGuard } from './protected-action-guard';
+import { appSessionStore } from '../state/store';
 
 const app = document.createElement('div');
 app.id = 'app';
@@ -68,9 +69,9 @@ const gameDetailsDialog = createGameDetailsDialog(
   {
     requireSession,
     getActiveSession: sessionController.getActiveSession,
+    sessionStore: appSessionStore,
   },
 );
-
 const header = createHeader(
   (mode, trigger): void => {
     if (!canOpenAuthDialog(sessionController)) {
